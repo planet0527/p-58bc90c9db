@@ -764,7 +764,7 @@ $('#reportSave').onclick=()=>{const n=$('#reportNote');state.weekNotes=state.wee
 let historyPage=0;
 function renderRec(){renderWeekly();renderHistory();for(const id of ['logF','scoreF']){const f=$('#'+id);f.elements.d.max=today();f.querySelector('button.pri').disabled=!state.exams.length}const f=$('#scoreF');const e=ex(f.elements.eid.value);if(e)f.elements.s.max=e.max;else f.elements.s.removeAttribute('max')}
 $('#scoreF').elements.eid.addEventListener('change',()=>{const f=$('#scoreF'),e=ex(f.elements.eid.value);if(e)f.elements.s.max=e.max;else f.elements.s.removeAttribute('max')});
-for(const b of $('.recordNav button'))b.onclick=()=>{const v=b.dataset.recordView;for(const k of ['entry','history','report'])$('#record'+k[0].toUpperCase()+k.slice(1)).hidden=k!==v;for(const x of $('.recordNav button'))x.setAttribute('aria-pressed',String(x===b))};
+for(const b of $$('.recordNav button'))b.onclick=()=>{const v=b.dataset.recordView;for(const k of ['entry','history','report'])$('#record'+k[0].toUpperCase()+k.slice(1)).hidden=k!==v;for(const x of $$('.recordNav button'))x.setAttribute('aria-pressed',String(x===b))};
 function renderHistory(){const sel=$('#historyExam'),old=sel.value;sel.innerHTML='<option value="">すべての資格</option>'+state.exams.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('');sel.value=ex(old)?old:'';
  const from=$('#historyFrom').value,to=$('#historyTo').value,query=$('#historyQuery').value.trim().toLocaleLowerCase(),eid=sel.value;
  const match=l=>(!eid||l.eid===eid)&&(!from||l.d>=from)&&(!to||l.d<=to);
