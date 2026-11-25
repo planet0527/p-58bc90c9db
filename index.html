@@ -354,7 +354,7 @@ textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding
  <div class="fmsg" id="fMsg"></div>
  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="pri" id="fGo" style="min-width:140px">開始</button><button id="fEnd">終了して記録</button></div>
  <div class="fsub" id="fSub"></div></div>
-<div id="storageWarning" role="alert" hidden class="swarn">端末への保存に失敗しました。ページを閉じる前にバックアップを書き出してください。<button data-go="help">データ管理へ</button></div><div id="toastBox" role="status" aria-live="polite"></div>
+<div id="renderWarning" hidden role="alert" class="band" style="color:#a64b20"></div><div id="storageWarning" role="alert" hidden class="swarn">端末への保存に失敗しました。ページを閉じる前にバックアップを書き出してください。<button data-go="help">データ管理へ</button></div><div id="toastBox" role="status" aria-live="polite"></div>
 <script>
 {
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -474,7 +474,8 @@ const doneOf=d=>(state.done&&state.done[d])||[];
 const REST_MSG=['今日は息抜きデー。休むことも、覚えたことを定着させる大事な時間です。','しっかり休んだ人ほど、本番で粘れる。今日は自分を甘やかしてOK。','散歩・早寝・好きなごはん。明日の集中力の貯金をしよう。'];
 
 let state;try{state=JSON.parse(localStorage.getItem(LS))}catch(e){}
-if(!state||!Array.isArray(state.exams))state=sample();
+if(!state||!Array.isArray(state.exams))state=sample();else normalizeState(state);
+function normalizeState(o){if(!Array.isArray(o.logs))o.logs=[];for(const e of o.exams){if(!Array.isArray(e.scores))e.scores=[];if(!Array.isArray(e.subs))e.subs=[]}for(const k of ['materials','reviews'])if(!Array.isArray(o[k]))o[k]=[];if(!o.done||typeof o.done!=='object'||Array.isArray(o.done))o.done={};return o}
 let tab='dash',dbRef=null,pushT=null;
 
 function save(){state.at=Date.now();let localOK=false;try{localStorage.setItem(LS,JSON.stringify(state));localOK=true}catch(e){}$('#storageWarning').hidden=localOK;try{autoBackup()}catch(e){}
@@ -579,16 +580,16 @@ function ics(){const Q=quotas(),L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//go
 const BK='gokaku-bk-v1';let bkList=[],bkRef=null,lastSync=null,pending=null,armed=null;
 try{bkList=JSON.parse(localStorage.getItem(BK))||[]}catch(e){}
 const enc=o=>'GKN1:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
-function dec(txt){txt=String(txt||'').trim();if(!txt)throw 0;let o;if(txt.startsWith('GKN1:'))o=JSON.parse(decodeURIComponent(escape(atob(txt.slice(5).replace(/\s/g,'')))));else o=JSON.parse(txt);if(!o||!Array.isArray(o.exams)||!Array.isArray(o.logs))throw 0;return o}
+function dec(txt){txt=String(txt||'').trim();if(!txt)throw 0;let o;if(txt.startsWith('GKN1:'))o=JSON.parse(decodeURIComponent(escape(atob(txt.slice(5).replace(/\s/g,'')))));else o=JSON.parse(txt);if(!o||!Array.isArray(o.exams)||!Array.isArray(o.logs)||o.exams.some(e=>!e||typeof e.id!=="string"||typeof e.name!=="string"||typeof e.date!=="string"||!Number.isFinite(e.max)||e.max<=0)||o.logs.some(l=>!l||typeof l.d!=="string"||!Number.isFinite(l.m)||l.m<=0))throw 0;return normalizeState(o)}
 const pure=()=>{const o=JSON.parse(JSON.stringify(state));delete o.sample;return o};
 function autoBackup(){if(state.sample||!state.exams.length)return;const t=today();if(bkList[0]&&bkList[0].d===t)return;
  bkList.unshift({d:t,at:Date.now(),json:JSON.stringify(pure())});bkList=bkList.slice(0,7);try{localStorage.setItem(BK,JSON.stringify(bkList))}catch(e){}
  if(bkRef)bkRef.set({json:JSON.stringify(bkList)}).catch(()=>{})}
 function summ(o){const lg=o.logs||[],last=lg.reduce((m,l)=>l.d>m?l.d:m,'');return `試験 ${o.exams.length}件（${o.exams.slice(0,3).map(e=>esc(e.name)).join('・')}${o.exams.length>3?' ほか':''}）・記録 ${lg.length}件・合計 ${h1(sum(lg))}時間${last?'・最後の記録 '+esc(last.replaceAll('-','/')):''}`}
-function restore(o,label){const p=snap();state=o;state.sample=false;if(!Array.isArray(state.badges))state.badges=earned();save();tab='dash';render();toast(label+'から復元しました',p);celebrate('復','復元しました',summ(o).replace(/<[^>]+>/g,''),'badge')}
+function restore(o,label){const p=snap();state=normalizeState(o);state.sample=false;if(!Array.isArray(state.badges))state.badges=earned();save();tab='dash';render();toast(label+'から復元しました',p);celebrate('復','復元しました',summ(o).replace(/<[^>]+>/g,''),'badge')}
 function renderBk(){if(!$('#bkStat'))return;
  $('#bkStat').innerHTML=(HOSTED?'<b>記録はこのスマホ（このブラウザ）の中だけに保存されます。</b>ほかの人には見えません。ブラウザのデータ削除や機種変更で消えるので、ときどき下の「バックアップコード」を控えておきましょう。<br>iPhoneは<b>共有ボタン →「ホーム画面に追加」</b>、Androidは<b>メニュー →「ホーム画面に追加」</b>でアプリのように使えます。iPhoneはホーム画面から使うと、データが消えにくくなります。':bkRef?`<b>自動で保存されています。</b>同じClaudeアカウントでログインすれば、スマホでもパソコンでも同じ記録が出ます${lastSync?'（最終保存 '+new Date(lastSync).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})+'）':''}。このページを共有された人は、それぞれ自分だけの記録になります（ほかの人には見えません）。`:'<b>いまはこの端末にだけ保存されています。</b>Claudeにログインした状態でこのページを開くと、アカウントに自動保存され、スマホでも同じ記録が使えます。念のため下の「バックアップコード」も控えておくと安心です。')+(state.sample?'<br>（サンプル表示中はバックアップしません）':'');
- $('#bkList').innerHTML=bkList.length?bkList.map((b,i)=>{let o;try{o=JSON.parse(b.json)}catch(e){return ''}return `<div class="bkrow"><span><b>${esc(b.d.replaceAll('-','/'))}（${wk(b.d)}）</b> の朝の状態<br><small class="why">${summ(o)}</small></span><button data-bk="${i}">${armed==='a'+i?'本当に戻す？':'この日に戻す'}</button></div>`}).join(''):'<p class="why">まだありません。記録を始めると1日1回自動で作られます。</p>';
+ $('#bkList').innerHTML=bkList.length?bkList.map((b,i)=>{let o;try{o=JSON.parse(b.json)}catch(e){return ''}return `<div class="bkrow"><span><b>${esc(b.d.replaceAll('-','/'))}（${wk(b.d)}）</b> の保存時点の状態<br><small class="why">${summ(o)}</small></span><button data-bk="${i}">${armed==='a'+i?'本当に戻す？':'この日に戻す'}</button></div>`}).join(''):'<p class="why">まだありません。記録を始めると1日1回自動で作られます。</p>';
  $('#bkPrev').innerHTML=pending?`<div class="prev"><b>この内容で復元しますか？</b><br>${summ(pending)}<br><span class="hint">いまの内容は上書きされますが、直後なら「元に戻す」で戻せます。</span><div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="pri" id="bkGo">この内容で復元</button><button class="ghost" id="bkCancel">やめる</button></div></div>`:''}
 $('#bkCopy').onclick=async()=>{if(state.sample){toast('サンプル表示中です。自分の試験を登録してから作れます');return}const c=enc(pure()),o=$('#bkOut');o.hidden=false;o.value=c;
  try{await navigator.clipboard.writeText(c);SE.coin();toast('コピーしました。メモアプリなどに貼っておけば安心です')}catch(e){o.focus();o.select();toast('下のコードを長押しして全選択→コピーしてください')}};
@@ -708,7 +709,7 @@ function renderGrowMini(){const box=$('#growMini');if(!box||!state.exams.length)
  box.innerHTML=`<button class="gmini" data-go="grow"><span class="gm-art">${gardenSVG(st)}</span><span class="gm-t"><b>学習の庭：${nm[st]}</b><small>${nx?'次の成長まで あと'+(nx-total)+'分':'最高段階！'}</small><small>バッジ ${bd}/${BD.length}・ハンコ ${col}/${HANKO.length}</small></span><span class="gm-go">成長を見る →</span></button>`}
 
 let lastTab=null;
-function render(){if(!Array.isArray(state.badges))state.badges=earned();
+function render(){$("#renderWarning").hidden=true;if(!Array.isArray(state.badges))state.badges=earned();
  if(lastTab!==tab){const v=$('#'+tab);v.classList.remove('view');void v.offsetWidth;v.classList.add('view');lastTab=tab}
  $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
  ['dash','sch','rec','grow','exams','help'].forEach(id=>$('#'+id).hidden=id!==tab);
@@ -716,19 +717,19 @@ function render(){if(!Array.isArray(state.badges))state.badges=earned();
  const sel=state.exams.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');
  $$('.esel').forEach(s=>{const v=s.value;s.innerHTML=sel;if(ex(v))s.value=v;else if(state.sel)s.value=state.sel});
  $$('form.row input[type=date]').forEach(i=>{if(!i.value)i.value=today()});
- renderDash();renderSch();renderRec();renderExams();renderFocusSel();renderMe();renderHelp();renderBk();renderColle();live();moveInd();justDone=null}
+ for(const [name,fn] of [["ダッシュボード",renderDash],["予定",renderSch],["記録",renderRec],["資格",renderExams],["タイマー",renderFocusSel],["プロフィール",renderMe],["ガイド",renderHelp],["バックアップ",renderBk],["コレクション",renderColle],["表示更新",live],["タブ位置",moveInd]]){try{fn()}catch(err){console.error(name,err);const warning=$("#renderWarning");warning.hidden=false;warning.textContent=name+"の表示に問題が発生しました。他の画面は引き続き利用できます。"}}justDone=null}
 renderGenDw();
 
 let C=null;
 function renderMotivation(){
  const t=today(),start=addDays(t,-((parse(t).getDay()+6)%7)),byDay={};
  for(const l of state.logs){if(l.d<=t)byDay[l.d]=(byDay[l.d]||0)+l.m}
- const days=Object.keys(byDay).sort(),total=Object.values(byDay).reduce((a,b)=>a+b,0),best=Math.max(0,...Object.values(byDay)),weeks={};
+ const days=Object.keys(byDay).sort(),total=Object.values(byDay).reduce((a,b)=>a+b,0),best=Object.values(byDay).reduce((a,b)=>Math.max(a,b),0),weeks={};
  let run=0,longest=0,last=null;for(const d of days){run=last&&diff(last,d)===1?run+1:1;longest=Math.max(longest,run);last=d;const w=addDays(d,-((parse(d).getDay()+6)%7));weeks[w]=(weeks[w]||0)+byDay[d]}
  const week=weeks[start]||0,goal=state.motivationGoal||180,active=days.filter(d=>d>=start).length,done=(state.materials||[]).filter(x=>ex(x.eid)&&x.done>=x.total).length;
  const milestones=[['最初の一歩',total>=5,'累計5分'],['積み重ねの力',total>=600,'累計10時間'],['学習習慣',days.length>=7,'累計7学習日'],['教材マスター',done>=1,'教材1冊完了'],['努力の証',total>=3000,'累計50時間']];
  const fmtM=m=>Math.floor(m/60)+'時間'+m%60+'分';
- $('#motivation').innerHTML='<div class="tcard" style="margin:16px 0"><h2>成長ノート</h2><p class="why">'+(byDay[t]?'今日も一歩進みました。':'今日は5分から始めても十分です。')+'</p><h3>自分で選ぶ週間チャレンジ</h3><div class="row"><label>今週の学習目標<select id="motGoal">'+[30,60,120,180,300,600,900].map(n=>'<option value="'+n+'" '+(goal===n?'selected':'')+'>'+fmtM(n)+'</option>').join('')+'</select></label></div><p><b>'+fmtM(week)+'</b> / '+fmtM(goal)+' · '+active+'日学習</p><div class="bar"><i class="'+(week>=goal?'clear':'')+'" style="width:'+Math.min(100,week/goal*100)+'%"></i></div><p class="hint">'+(week>=goal?'週間チャレンジ達成！休息も大切に。':'残り '+fmtM(goal-week)+'。目標はいつでも変更できます。')+'</p><h3>個人ベスト</h3><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"><div>1日最高<br><b>'+fmtM(best)+'</b></div><div>週間最高<br><b>'+fmtM(Math.max(0,...Object.values(weeks)))+'</b></div><div>累計学習日<br><b>'+days.length+'日</b></div><div>連続学習の最高記録<br><b>'+longest+'日</b></div></div><details><summary>勉強する理由・未来の自分へのメッセージ</summary><textarea id="motReason" maxlength="1000" rows="3" style="width:100%;box-sizing:border-box;font:inherit" placeholder="資格を取ったら何をしたい？">'+esc(state.motivationReason||'')+'</textarea><button type="button" id="motSave">保存</button></details></div>';
+ $('#motivation').innerHTML='<div class="tcard" style="margin:16px 0"><h2>成長ノート</h2><p class="why">'+(byDay[t]?'今日も一歩進みました。':'今日は5分から始めても十分です。')+'</p><h3>自分で選ぶ週間チャレンジ</h3><div class="row"><label>今週の学習目標<select id="motGoal">'+[30,60,120,180,300,600,900].map(n=>'<option value="'+n+'" '+(goal===n?'selected':'')+'>'+fmtM(n)+'</option>').join('')+'</select></label></div><p><b>'+fmtM(week)+'</b> / '+fmtM(goal)+' · '+active+'日学習</p><div class="bar"><i class="'+(week>=goal?'clear':'')+'" style="width:'+Math.min(100,week/goal*100)+'%"></i></div><p class="hint">'+(week>=goal?'週間チャレンジ達成！休息も大切に。':'残り '+fmtM(goal-week)+'。目標はいつでも変更できます。')+'</p><h3>個人ベスト</h3><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"><div>1日最高<br><b>'+fmtM(best)+'</b></div><div>週間最高<br><b>'+fmtM(Object.values(weeks).reduce((a,b)=>Math.max(a,b),0))+'</b></div><div>累計学習日<br><b>'+days.length+'日</b></div><div>連続学習の最高記録<br><b>'+longest+'日</b></div></div><details><summary>勉強する理由・未来の自分へのメッセージ</summary><textarea id="motReason" maxlength="1000" rows="3" style="width:100%;box-sizing:border-box;font:inherit" placeholder="資格を取ったら何をしたい？">'+esc(state.motivationReason||'')+'</textarea><button type="button" id="motSave">保存</button></details></div>';
  $('#motGoal').onchange=e=>{state.motivationGoal=Number(e.target.value);save();renderMotivation()};
  $('#motSave').onclick=()=>{state.motivationReason=$('#motReason').value;save();toast('メッセージを保存しました')};
 }
@@ -882,12 +883,12 @@ function toast(msg,prev){undo=prev;clearTimeout(toastT);$('#toastBox').innerHTML
 const snap=()=>JSON.stringify(state);
 
 document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;const d=b.dataset;
- if(d.tab){SE.click();const was=tab;tab=d.tab;render();if(tab==='dash'&&was!=='dash'&&state.exams.length)setTimeout(SE.stamp,560);return}
+ if(d.tab&&["dash","sch","rec","exams","help"].includes(d.tab)){SE.click();const was=tab;tab=d.tab;render();if(tab==='dash'&&was!=='dash'&&state.exams.length)setTimeout(SE.stamp,560);return}
  if(d.sel){SE.click();state.sel=d.sel;save();render();setTimeout(SE.stamp,560);return}
 
  if(d.sub){const [eid,sid]=d.sub.split('|'),x=(ex(eid).subs||[]).find(z=>z.id===sid);if(x){x.l=(x.l+1)%3;SE.click();save();render()}return}
  if(b.id==='ics'){(async()=>{if(!state.life){toast('先に生活リズムを設定してください');return}try{const ok=await saveFile('合格逆算ノート_2週間の予定.ics',ics(),'text/calendar');if(!ok){toast('この画面ではファイル保存が使えません');return}SE.coin();toast('保存したファイルを開くと、カレンダーに追加できます（各予定の5分前に通知）')}catch(e){toast('保存がキャンセルされました')}})();return}
- if(d.go){SE.click();tab=d.go;render();scrollTo({top:0,behavior:calm?'auto':'smooth'});return}
+ if(d.go&&["dash","sch","rec","exams","help"].includes(d.go)){SE.click();tab=d.go;render();scrollTo({top:0,behavior:calm?'auto':'smooth'});return}
  if(b.id==='seen'){try{localStorage.setItem('gokaku-seen','1')}catch(e){}render();return}
  if(d.life){SE.stamp();const p=snap();state.life=d.life==='custom'?{type:'custom',slots:state.life?state.life.slots:[],rest:state.life?state.life.rest:[0]}:mkLife(d.life);save();render();if(d.life!=='custom')toast('スキマ時間を設定しました。予定を組み直しました',p);return}
  if(d.sd){const [sid,w]=d.sd.split('|'),sl=state.life.slots.find(x=>x.id===sid);if(sl){const W=Number(w),c=dwOf(sl);sl.dw=c.includes(W)?c.filter(x=>x!==W):[...c,W];state.life.type='custom';SE.click();save();render()}return}
@@ -896,7 +897,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(b.id==='addSlot'){if(!state.life)state.life={type:'custom',slots:[],rest:[0]};state.life.slots.push({id:uid(),label:'スキマ',t:'19:00',m:30,dw:[...WD]});state.life.type='custom';save();render();return}
  if(d.claim){const q=qst();if(!q.c.includes(d.claim)){q.c.push(d.claim);addBX(30,'mission');save();render();SE.coin();buzz(20);floatTxt('+30 XP');confetti(40,pt.x,pt.y);if(q.c.length===3)setTimeout(()=>{SE.badge();floatTxt('宝箱が開けられる！',innerWidth/2,innerHeight*.4)},500)}return}
  if(b.dataset.chest!==undefined){openChest();return}
- if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||!ex(it.eid)||doneOf(t).includes(it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
+ if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||!ex(it.eid)||doneOf(t).includes(it.sid)||state.logs.some(l=>l.d===t&&l.slotId===it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
   state.done[t]=[...doneOf(t),it.sid];justDone=it.sid;const all=dayPlan(t).items,fin=all.length&&all.every(i=>doneOf(t).includes(i.sid));
   addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus,it.sid);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
  if(d.q){addLog($('#logF').elements.eid.value,today(),Number(d.q),'クイック追加');return}
@@ -905,7 +906,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(b.id==='clr'){state={exams:[],logs:[],sel:null,at:0,badges:[],life:null};save();render();openDlg();return}
  if(d.add!==undefined||b.id==='addE'){openDlg();return}
  if(d.ed){openDlg(d.ed);return}
- if(d.de){const p=snap();state.exams=state.exams.filter(e=>e.id!==d.de);state.logs=state.logs.filter(l=>l.eid!==d.de);save();render();toast('試験を削除しました',p);return}
+ if(d.de){if(!confirm('資格と関連する学習記録・教材・復習項目を削除しますか？'))return;if(T.eid===d.de&&el()>0){toast('先に集中タイマーを終了してください');return}const p=snap();const removed=state.logs.filter(l=>l.eid===d.de);for(const l of removed)if(l.slotId&&state.done?.[l.d])state.done[l.d]=state.done[l.d].filter(id=>id!==l.slotId);state.exams=state.exams.filter(e=>e.id!==d.de);state.logs=state.logs.filter(l=>l.eid!==d.de);state.materials=(state.materials||[]).filter(x=>x.eid!==d.de);state.reviews=(state.reviews||[]).filter(x=>x.eid!==d.de);save();render();toast('試験を削除しました',p);return}
  if(d.dl){const p=snap();const old=state.logs.find(l=>l.id===d.dl);if(old?.slotId&&state.done?.[old.d])state.done[old.d]=state.done[old.d].filter(id=>id!==old.slotId);state.logs=state.logs.filter(l=>l.id!==d.dl);save();render();toast('記録を削除しました',p);return}
  if(d.ds){const p=snap(),[id,i]=d.ds.split('|');const e=ex(id);e.scores.splice(Number(i),1);save();render();toast('点数を削除しました',p);return}
  if(b.id==='undo'&&undo){state=JSON.parse(undo);undo=null;save();render();$('#toastBox').innerHTML='';return}});
@@ -933,7 +934,7 @@ const LEN={pomo:25,brk:5};try{const p=JSON.parse(localStorage.getItem("gokaku-fo
 const FMSG=['スマホは裏返しに','いま積んでる時間が、本番の点数になる','1問ずつ。目の前の1問だけ','集中できてる。その調子','わからない所こそ伸びしろ','あと少し。やり切ろう'];
 const saveT=()=>{try{localStorage.setItem(LT,JSON.stringify(T))}catch(e){}};
 const el=()=>T.acc+(T.start?Date.now()-T.start:0);
-function renderFocusSel(){$('#fEx').innerHTML=state.exams.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');if(!ex(T.eid))T.eid=state.sel;$('#fEx').value=T.eid||'';$('#fEx').disabled=el()>0}
+function renderFocusSel(){$('#fEx').innerHTML=state.exams.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');if(!ex(T.eid)){T.eid=cur()?.id||null;T.start=null;T.acc=0;saveT()}$('#fEx').value=T.eid||'';$('#fEx').disabled=el()>0}
 const fmt=ms=>{const s=Math.max(0,Math.round(ms/1000)),h=Math.floor(s/3600);return (h?h+':'+pad(Math.floor(s/60)%60):pad(Math.floor(s/60)))+':'+pad(s%60)};
 function tick(){const ms=el();let shown,frac;
  if(T.mode==='free'){shown=ms;frac=(ms%3600000)/3600000}else{const L=LEN[T.mode]*60000;shown=L-ms;frac=ms/L;
@@ -945,7 +946,7 @@ function tick(){const ms=el();let shown,frac;
  $('#fTime').textContent=fmt(shown);$('#arc').setAttribute('stroke-dashoffset',String(100-Math.min(1,frac)*100));$('#arc').setAttribute('stroke',T.mode==='brk'?'#86b6e6':'#ff6166');
  $('#focusLen').disabled=$('#breakLen').disabled=ms>0;$('#fEx').disabled=ms>0;$('#fGo').textContent=T.start?'一時停止':el()>0?'再開':'開始';
  $$('#focus .modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===T.mode));
- const e=ex(T.eid);let sub='';if(e){const c=calc(e);sub+=(sub?'　':'')+`今日 ${h1(c.todayDone)} / ${c.perDay===Infinity?'—':h1(c.perDay)} 時間・試験まであと${c.left}日`}
+ const e=ex(T.eid);$("#fGo").disabled=!e;let sub='';if(e){const c=calc(e);sub+=(sub?'　':'')+`今日 ${h1(c.todayDone)} / ${c.perDay===Infinity?'—':h1(c.perDay)} 時間・試験まであと${c.left}日`}
  $('#fSub').textContent=sub;
  $('#fab').textContent=T.start?(T.mode==='brk'?'休憩 ':'集中中 ')+fmt(T.mode==='free'?ms:LEN[T.mode]*60000-ms):'集中する'}
 function loop(){clearInterval(iv);iv=setInterval(tick,250);tick()}
@@ -954,7 +955,7 @@ $('#fClose').onclick=()=>{$('#focus').classList.remove('on')};
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')$('#focus').classList.remove('on')});
 $('#fEx').onchange=ev=>{T.eid=ev.target.value;saveT();tick()};
 $$('#focus .modes button').forEach(b=>b.onclick=()=>{SE.click();if(T.mode!=='brk'&&el()>=60000)addLog(T.eid,today(),el()/60000,T.mode==='free'?'ストップウォッチ':'集中タイマー(途中)');T.mode=b.dataset.m;T.start=null;T.acc=0;saveT();tick()});
-$('#fGo').onclick=()=>{ac();if(T.start){T.acc=el();T.start=null;SE.pause()}else{T.eid=$('#fEx').value;T.start=Date.now();SE.start()}saveT();tick()};
+$('#fGo').onclick=()=>{if(!T.start&&!ex($('#fEx').value))return;ac();if(T.start){T.acc=el();T.start=null;SE.pause()}else{T.eid=$('#fEx').value;T.start=Date.now();SE.start()}saveT();tick()};
 $('#fEnd').onclick=()=>{const ms=el();if(T.mode!=='brk'&&ms>=60000){addLog(T.eid,today(),ms/60000,T.mode==='free'?'ストップウォッチ':'集中タイマー')}T.start=null;T.acc=0;if(T.mode==='brk')T.mode='pomo';saveT();tick()};
 document.addEventListener('visibilitychange',tick);
 const sndL=()=>{$('#snd').textContent=muted?'音なし':'音あり';$('#snd').setAttribute('aria-pressed',String(!muted))};sndL();
@@ -971,7 +972,7 @@ render();loop();
 (async()=>{try{if(!window.claude||!claude.use){loginBonus();return}const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);if(!db||!user){loginBonus();return}
  const id=await user.id();if(!id){loginBonus();return}dbRef=db.collection('data/users/'+id).doc('state');
  const r=await dbRef.get();let v=r;if(r&&typeof r.data==='function')v=r.exists===false?null:r.data();else if(r&&r.data&&typeof r.data==='object'&&!r.json)v=r.data;
- if(v&&v.json){const remote=JSON.parse(v.json);if(remote&&Array.isArray(remote.exams)&&(state.sample||(remote.at||0)>(state.at||0))){state=remote;try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render()}else if(!state.sample)save()}
+ if(v&&v.json){const remote=JSON.parse(v.json);if(remote&&Array.isArray(remote.exams)&&(state.sample||(remote.at||0)>(state.at||0))){state=normalizeState(remote);try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render()}else if(!state.sample)save()}
  else if(!state.sample)save();
  lastSync=Date.now();$('#sync').textContent='アカウントに同期済み';
  bkRef=db.collection('data/users/'+id).doc('backups');try{const r2=await bkRef.get();let w=r2;if(r2&&typeof r2.data==='function')w=r2.exists===false?null:r2.data();else if(r2&&r2.data&&typeof r2.data==='object'&&!r2.json)w=r2.data;
