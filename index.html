@@ -441,8 +441,8 @@ function pickSub(e,d,i){const S=(e.subs||[]);if(!S.length)return '';const bag=[]
 function quotas(){const sdw=Math.max(1,7-(state.life?state.life.rest.length:0));
  return state.exams.map(e=>{const c=calc(e);return {e,c,q:c.left>0&&c.remain>0&&c.perDay!==Infinity?c.perDay*e.days/sdw*60:0}})}
 function dayPlan(d,Q){Q=Q||quotas();if(!state.life)return null;if(isRest(d))return {rest:true,items:[],need:0,cap:0};
- const act=Q.filter(x=>d<x.e.date&&x.c.left>0).map(x=>({...x,r:x.q}));const need=act.reduce((a,x)=>a+x.q,0);const we=isWE(d);
- const items=slotsOn(d).map((s,i)=>{let p=act.filter(x=>x.r>0).sort((a,b)=>b.r/b.q-a.r/a.q||b.r-a.r)[0],bonus=false;
+ const act=Q.filter(x=>d<x.e.date&&x.c.left>0).map(x=>({...x,r:d===today()?Math.max(0,x.q-x.c.todayDone*60):x.q}));const need=act.reduce((a,x)=>a+x.r,0);const we=isWE(d);
+ const items=slotsOn(d).map((s,i)=>{const saved=d===today()?state.logs.find(l=>l.d===d&&l.slotId===s.id):null;if(saved)return {sid:s.id,t:s.t,m:saved.m,label:s.label,eid:saved.eid,bonus:!!saved.b,task:saved.note||'学習済み'};let p=act.filter(x=>x.r>0).sort((a,b)=>b.r/b.q-a.r/a.q||b.r-a.r)[0],bonus=false;
   if(!p){bonus=true;p=act.slice().sort((a,b)=>a.e.date<b.e.date?-1:1)[0]}if(p)p.r-=s.m;
   const sb=p?pickSub(p.e,d,i):'';return {sid:s.id,t:s.t,m:s.m,label:s.label,eid:p?p.e.id:null,bonus:bonus&&!!p,task:task(s.m,we,p?p.c.phase:0)+(sb?'：'+sb:'')}});
  return {rest:false,items,need,cap:capDay(d)}}
@@ -491,10 +491,10 @@ function renderToday(c){const t=today(),box=$('#today');
  const nm=nowMin();let missed=0;
  const rows=P.items.map(it=>{const e=ex(it.eid),st=toMin(it.t),done=dn.includes(it.sid),now=!done&&nm>=st&&nm<st+it.m,miss=!done&&nm>=st+it.m;if(miss)missed+=it.m;
   return `<div class="slot ${done?'done':''} ${it.sid===justDone?'jd':''} ${now?'now':''} ${miss?'miss':''}"><div class="tm">${it.t}<small>${it.m}分</small></div><div class="bd2"><b>${esc(it.label)}</b>${it.bonus?'<span class="bn">ボーナス XP×1.5</span>':''}${now?' <span class="nowtag">いまスキマ時間！</span>':''}<small>${e?`<span class="dot" style="background:${COL[e.color%COL.length]}"></span>${esc(e.name)}・`:''}${it.task}</small></div>${done?'<span class="ok">済</span>':e?`<button class="pri" data-do="${esc(it.sid)}">やった！</button>`:''}</div>`}).join('');
- const all=P.items.length,dc=P.items.filter(i=>dn.includes(i.sid)).length;
+ const all=P.items.filter(i=>i.eid).length,dc=P.items.filter(i=>i.eid&&dn.includes(i.sid)).length;
  const tip=missed&&dc<all?`<p class="why" style="margin-top:8px">過ぎたスキマ ${missed}分は、まだ「やった！」を押せます。できなかった分は明日以降に自動で配り直すので、気にしすぎなくて大丈夫。</p>`:'';
  const over=over6()?'<div class="calm" style="margin-top:10px">6日連続でノルマ達成中。すごい。<b>そろそろ息抜きもアリ</b>です。休むのも合格戦略のひとつ。</div>':'';
- box.innerHTML=`<div class="urg" id="urg"></div><div class="tcard">${review()}<h2>今日やること <small>${dc}/${all} 枠 完了・スキマ合計 ${P.cap}分</small></h2>${rows||'<p class="why">今日はスキマ時間がありません。「予定」から追加できます。</p>'}${tip}${over}</div>`}
+ box.innerHTML=`<div class="urg" id="urg"></div><div class="tcard">${review()}<h2>今日やること <small>${dc}/${all} 枠 完了・スキマ合計 ${P.cap}分</small></h2>${rows||'<p class="why">今日はスキマ時間がありません。「予定」から追加できます。</p>'}${P.need>P.cap?`<p class="why" role="status">今日の必要時間に対して、予定枠が約${Math.ceil(P.need-P.cap)}分不足しています。<button data-go="sch">予定を調整</button></p>`:''}${tip}${over}</div>`}
 function over6(){for(let i=1;i<=6;i++){const d=addDays(today(),-i);if(!state.logs.some(l=>l.d===d))return false}return !(state.life&&state.life.rest.length)}
 function renderSch(){const L=state.life,Q=quotas();
  $('#ltype').innerHTML=Object.entries(LIFE).map(([k,v])=>`<button data-life="${k}" aria-pressed="${!!L&&L.type===k}">${v[0]}</button>`).join('')+`<button data-life="custom" aria-pressed="${!!L&&L.type==='custom'}">自分で作る</button>`;if(!L)$('#gen').open=true;if(L&&L.gen){const F=$('#genF').elements;for(const k in L.gen)if(F[k]&&!F[k].matches(':focus'))F[k].value=L.gen[k];}
@@ -748,7 +748,7 @@ function lvUI(){const P=$('#pre').value===''?null:PRE[Number($('#pre').value)];$
 function applyPre(){const P=$('#pre').value===''?null:PRE[Number($('#pre').value)],F=$('#eF').elements;if(!P){lvUI();plan();return}
  F.name.value=P[1];F.max.value=P[2];F.pass.value=P[3];F.target.value=P[4];F.H.value=P[5][dLv];lvUI();plan()}
 function plan(){const F=$('#eF').elements,H=Number(F.H.value),days=Math.min(7,Math.max(1,Number(F.days.value)||1)),cap=Number(F.cap.value)||0,left=F.date.value?diff(today(),F.date.value):0;
- if(!H||left<=0){$('#plan').innerHTML='<span class="hint">試験日を入れると、1日あたりの必要時間が出ます。</span>';return}
+ if(!Number.isFinite(H)||H<=0||cap<=0||left<=0){$('#plan').innerHTML='<span class="hint">試験日を入れると、1日あたりの必要時間が出ます。</span>';return}
  const sd=left*days/7,pd=H/sd,wk=pd*days;let msg;
  if(pd<=cap*.85)msg='上限の範囲で余裕をもって進められます。';else if(pd<=cap)msg='上限ぎりぎり。毎日のノルマを守れば届きます。';
  else{const need=Math.ceil(H/cap*7/days);msg=`<span class="warn">1日${cap}時間だと足りません。</span> この時間で進めるなら試験日を <b>${addDays(today(),need).replaceAll('-','/')}</b> 以降にするか、1日の時間を増やしましょう。`}
@@ -791,7 +791,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(b.dataset.chest!==undefined){openChest();return}
  if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||doneOf(t).includes(it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
   state.done[t]=[...doneOf(t),it.sid];justDone=it.sid;const all=dayPlan(t).items,fin=all.length&&all.every(i=>doneOf(t).includes(i.sid));
-  addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
+  addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus,it.sid);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
  if(d.q){addLog($('#logF').elements.eid.value,today(),Number(d.q),'クイック追加');return}
  if(d.sample!==undefined){showSample();return}
  if(b.id==='backOwn'){backOwn();return}
@@ -799,12 +799,12 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(d.add!==undefined||b.id==='addE'){openDlg();return}
  if(d.ed){openDlg(d.ed);return}
  if(d.de){const p=snap();state.exams=state.exams.filter(e=>e.id!==d.de);state.logs=state.logs.filter(l=>l.eid!==d.de);save();render();toast('試験を削除しました',p);return}
- if(d.dl){const p=snap();state.logs=state.logs.filter(l=>l.id!==d.dl);save();render();toast('記録を削除しました',p);return}
+ if(d.dl){const p=snap();const old=state.logs.find(l=>l.id===d.dl);if(old?.slotId&&state.done?.[old.d])state.done[old.d]=state.done[old.d].filter(id=>id!==old.slotId);state.logs=state.logs.filter(l=>l.id!==d.dl);save();render();toast('記録を削除しました',p);return}
  if(d.ds){const p=snap(),[id,i]=d.ds.split('|');const e=ex(id);e.scores.splice(Number(i),1);save();render();toast('点数を削除しました',p);return}
  if(b.id==='undo'&&undo){state=JSON.parse(undo);undo=null;save();render();$('#toastBox').innerHTML='';return}});
 
 function snapS(eid){const e=ex(eid),c=e?calc(e):null,xp=xpOf();return {xp,lv:lvOf(xp).n,td:c?c.todayDone:0,goal:c?c.perDay:0,rem:c?c.remain:0}}
-function addLog(eid,d,m,note,p,bn){if(!ex(eid)||!Number.isFinite(m)||m<1||!d||d>today())return;const b=snapS(eid);const L={id:uid(),eid,d,m:Math.round(m),note:note||''};if(p)L.p=1;if(bn)L.b=1;state.logs.push(L);const a=snapS(eid);
+function addLog(eid,d,m,note,p,bn,slotId){if(!ex(eid)||!Number.isFinite(m)||m<1||!d||d>today())return;const b=snapS(eid);const L={id:uid(),eid,d,m:Math.round(m),note:note||''};if(p)L.p=1;if(bn)L.b=1;if(slotId)L.slotId=slotId;state.logs.push(L);const a=snapS(eid);
  const cleared=d===today()&&b.goal>0&&b.goal!==Infinity&&b.td<b.goal&&a.td>=b.goal;if(cleared)state.goal=true;
  const nw=checkBadges();fresh=nw;hitNext={eid,m:Math.round(m)};state.sel=eid;save();render();
  SE.coin();buzz(15);{const x=$('.xp');x.classList.remove('spark');void x.offsetWidth;x.classList.add('spark')}floatTxt('+'+(a.xp-b.xp)+' XP');if(!calm)confetti(26,pt.x,pt.y);
