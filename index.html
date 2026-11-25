@@ -328,7 +328,7 @@ textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding
 <div id="focus" aria-modal="true" role="dialog" aria-label="集中モード"><button class="fx" id="fClose">閉じる</button>
  <select id="fEx" aria-label="試験"></select>
  <div class="modes" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button data-m="pomo">集中 25分</button><button data-m="brk">休憩 5分</button><button data-m="free">ストップウォッチ</button></div>
- <div id="embers" aria-hidden="true"></div><div class="ring" id="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#22252c" stroke-width="3"/><circle id="arc" cx="50" cy="50" r="46" fill="none" stroke="#ff6166" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg><div class="num" id="fTime">25:00</div></div>
+ <details id="focusSettings" style="max-width:340px;width:90%;text-align:center"><summary>集中時間・音量の設定</summary><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:10px"><label>集中（分）<input id="focusLen" type="number" min="5" max="120" step="1" style="width:80px"></label><label>休憩（分）<input id="breakLen" type="number" min="1" max="60" step="1" style="width:80px"></label><label style="width:100%">効果音の音量 <output id="volumeOut"></output><input id="volume" type="range" min="0" max="100" step="5" style="width:100%"></label><small>時間設定は次のセッションから変更できます。</small></div></details><div id="embers" aria-hidden="true"></div><div class="ring" id="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#22252c" stroke-width="3"/><circle id="arc" cx="50" cy="50" r="46" fill="none" stroke="#ff6166" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg><div class="num" id="fTime">25:00</div></div>
  <div class="fmsg" id="fMsg"></div>
  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="pri" id="fGo" style="min-width:140px">開始</button><button id="fEnd">終了して記録</button></div>
  <div class="fsub" id="fSub"></div></div>
@@ -360,10 +360,10 @@ function sample(){const t=today();let r=7;const rnd=()=>(r=(r*9301+49297)%233280
 
 
 /* ---- sound ---- */
-let AC=null,muted=false;try{muted=localStorage.getItem('gokaku-mute')==='1'}catch(e){}
+let AC=null,muted=false,volume=0.7;try{const v=localStorage.getItem("gokaku-volume");if(v!==null&&Number.isFinite(Number(v)))volume=Math.max(0,Math.min(1,Number(v)))}catch(e){}try{muted=localStorage.getItem('gokaku-mute')==='1'}catch(e){}
 const ac=()=>{if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC};
-function tone(fr,st,du,ty,vo,sl){const a=ac();if(!a||muted)return;const t=a.currentTime+st,o=a.createOscillator(),g=a.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(fr,t);if(sl)o.frequency.exponentialRampToValueAtTime(sl,t+du);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vo||.15,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+du);o.connect(g).connect(a.destination);o.start(t);o.stop(t+du+.05)}
-function noise(st,du,vo){const a=ac();if(!a||muted)return;const n=Math.floor(a.sampleRate*du),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n)**2;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();fl.type='lowpass';fl.frequency.value=800;g.gain.value=vo;s.buffer=b;s.connect(fl).connect(g).connect(a.destination);s.start(a.currentTime+st)}
+function tone(fr,st,du,ty,vo,sl){const a=ac();if(!a||muted||volume===0)return;const t=a.currentTime+st,o=a.createOscillator(),g=a.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(fr,t);if(sl)o.frequency.exponentialRampToValueAtTime(sl,t+du);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,(vo||.15)*volume),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+du);o.connect(g).connect(a.destination);o.start(t);o.stop(t+du+.05)}
+function noise(st,du,vo){const a=ac();if(!a||muted||volume===0)return;const n=Math.floor(a.sampleRate*du),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n)**2;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();fl.type='lowpass';fl.frequency.value=800;g.gain.value=vo*volume;s.buffer=b;s.connect(fl).connect(g).connect(a.destination);s.start(a.currentTime+st)}
 const SE={click:()=>tone(760,0,.05,'triangle',.06),
  coin:()=>{tone(988,0,.09,'square',.07);tone(1319,.08,.35,'square',.07)},
  stamp:()=>{tone(160,0,.22,'sine',.5,50);noise(0,.15,.6)},
@@ -789,7 +789,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(b.id==='addSlot'){if(!state.life)state.life={type:'custom',slots:[],rest:[0]};state.life.slots.push({id:uid(),label:'スキマ',t:'19:00',m:30,dw:[...WD]});state.life.type='custom';save();render();return}
  if(d.claim){const q=qst();if(!q.c.includes(d.claim)){q.c.push(d.claim);addBX(30,'mission');save();render();SE.coin();buzz(20);floatTxt('+30 XP');confetti(40,pt.x,pt.y);if(q.c.length===3)setTimeout(()=>{SE.badge();floatTxt('宝箱が開けられる！',innerWidth/2,innerHeight*.4)},500)}return}
  if(b.dataset.chest!==undefined){openChest();return}
- if(d.do){const t=today(),it=dayPlan(t).items.find(i=>i.sid===d.do);if(!it)return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
+ if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||doneOf(t).includes(it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
   state.done[t]=[...doneOf(t),it.sid];justDone=it.sid;const all=dayPlan(t).items,fin=all.length&&all.every(i=>doneOf(t).includes(i.sid));
   addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
  if(d.q){addLog($('#logF').elements.eid.value,today(),Number(d.q),'クイック追加');return}
@@ -809,7 +809,7 @@ function addLog(eid,d,m,note,p,bn){if(!ex(eid)||!Number.isFinite(m)||m<1||!d||d>
  const nw=checkBadges();fresh=nw;hitNext={eid,m:Math.round(m)};state.sel=eid;save();render();
  SE.coin();buzz(15);{const x=$('.xp');x.classList.remove('spark');void x.offsetWidth;x.classList.add('spark')}floatTxt('+'+(a.xp-b.xp)+' XP');if(!calm)confetti(26,pt.x,pt.y);
  if(a.lv>b.lv){$('#lvb').classList.remove('up');void $('#lvb').offsetWidth;$('#lvb').classList.add('up')}
- if(p)celebrate('25分','集中 完走！','+'+(a.xp-b.xp)+' XP　5分休憩しよう','clear');
+ if(p)celebrate(LEN.pomo+'分','集中 完走！','+'+(a.xp-b.xp)+' XP　休憩しよう','clear');
  if(cleared)celebrate('済','今日のノルマ達成！',ex(eid).name+'　'+h1(a.td)+'時間 やりきった','clear');
  if(a.lv>b.lv)celebrate('Lv.'+a.lv,'レベルアップ！','称号「'+ttl(a.lv)+'」になりました','level');
  if(b.rem>0&&a.rem<=0)celebrate('撃破','ボス撃破！',ex(eid).name+'：目標点に届く計算になりました','level');
@@ -822,7 +822,7 @@ $('#scoreF').addEventListener('submit',ev=>{ev.preventDefault();const F=ev.targe
 /* focus timer */
 let T;try{T=JSON.parse(localStorage.getItem(LT))}catch(e){}
 if(!T)T={eid:null,mode:'pomo',start:null,acc:0};
-const LEN={pomo:25,brk:5};let iv=null,lastS=-1;
+const LEN={pomo:25,brk:5};try{const p=JSON.parse(localStorage.getItem("gokaku-focus-lengths"));if(p&&Number.isInteger(p.pomo)&&p.pomo>=5&&p.pomo<=120&&Number.isInteger(p.brk)&&p.brk>=1&&p.brk<=60)Object.assign(LEN,p)}catch(e){}let iv=null,lastS=-1;
 const FMSG=['スマホは裏返しに','いま積んでる時間が、本番の点数になる','1問ずつ。目の前の1問だけ','集中できてる。その調子','わからない所こそ伸びしろ','あと少し。やり切ろう'];
 const saveT=()=>{try{localStorage.setItem(LT,JSON.stringify(T))}catch(e){}};
 const el=()=>T.acc+(T.start?Date.now()-T.start:0);
@@ -830,13 +830,13 @@ function renderFocusSel(){$('#fEx').innerHTML=state.exams.map(e=>`<option value=
 const fmt=ms=>{const s=Math.max(0,Math.round(ms/1000)),h=Math.floor(s/3600);return (h?h+':'+pad(Math.floor(s/60)%60):pad(Math.floor(s/60)))+':'+pad(s%60)};
 function tick(){const ms=el();let shown,frac;
  if(T.mode==='free'){shown=ms;frac=(ms%3600000)/3600000}else{const L=LEN[T.mode]*60000;shown=L-ms;frac=ms/L;
-  if(ms>=L&&T.start){const was=T.mode;T.start=null;T.acc=0;SE.bell();if(was==='pomo'){T.mode='brk';T.start=Date.now();saveT();addLog(T.eid,today(),LEN.pomo,'集中タイマー',1)}else{T.mode='pomo';saveT();celebrate('再','休憩おわり','次の25分、いこう','badge')}return tick()}
+  if(ms>=L&&T.start){const was=T.mode;T.start=null;T.acc=0;SE.bell();if(was==='pomo'){T.mode='brk';T.start=Date.now();saveT();addLog(T.eid,today(),LEN.pomo,'集中タイマー',1)}else{T.mode='pomo';saveT();celebrate('再','休憩おわり','次の'+LEN.pomo+'分、いこう','badge')}return tick()}
   const sl=Math.ceil(shown/1000);if(T.start&&sl<=5&&sl>0&&sl!==lastS){lastS=sl;SE.tick()}}
  $('#ring').classList.toggle('run',!!T.start&&T.mode!=='brk');$('#ring').classList.toggle('last',!!T.start&&T.mode!=='free'&&shown<=10000);
  $('#focus').classList.toggle('running',!!T.start);$('#focus').classList.toggle('brk',!!T.start&&T.mode==='brk');
  $('#fMsg').textContent=T.start?(T.mode==='brk'?(Math.floor(ms/4000)%2?'ゆっくり吐いて…':'大きく吸って…'):FMSG[Math.floor(ms/40000)%FMSG.length]):'ボタンを押したら、あとは目の前の1問だけ';
  $('#fTime').textContent=fmt(shown);$('#arc').setAttribute('stroke-dashoffset',String(100-Math.min(1,frac)*100));$('#arc').setAttribute('stroke',T.mode==='brk'?'#86b6e6':'#ff6166');
- $('#fEx').disabled=ms>0;$('#fGo').textContent=T.start?'一時停止':el()>0?'再開':'開始';
+ $('#focusLen').disabled=$('#breakLen').disabled=ms>0;$('#fEx').disabled=ms>0;$('#fGo').textContent=T.start?'一時停止':el()>0?'再開':'開始';
  $$('#focus .modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===T.mode));
  const e=ex(T.eid);let sub='';if(e){const c=calc(e);sub+=(sub?'　':'')+`今日 ${h1(c.todayDone)} / ${c.perDay===Infinity?'—':h1(c.perDay)} 時間・試験まであと${c.left}日`}
  $('#fSub').textContent=sub;
@@ -853,6 +853,11 @@ document.addEventListener('visibilitychange',tick);
 const sndL=()=>{$('#snd').textContent=muted?'音なし':'音あり';$('#snd').setAttribute('aria-pressed',String(!muted))};sndL();
 $('#snd').onclick=()=>{muted=!muted;try{localStorage.setItem('gokaku-mute',muted?'1':'0')}catch(e){}sndL();SE.coin()};
 
+function focusSettingsUI(){ $('#focusLen').value=LEN.pomo;$('#breakLen').value=LEN.brk;$('.modes [data-m="pomo"]').textContent='集中 '+LEN.pomo+'分';$('.modes [data-m="brk"]').textContent='休憩 '+LEN.brk+'分';$('#volume').value=Math.round(volume*100);$('#volumeOut').textContent=Math.round(volume*100)+'%'}
+for(const [id,k,min,max] of [['focusLen','pomo',5,120],['breakLen','brk',1,60]]){$('#'+id).addEventListener('change',ev=>{const n=Number(ev.target.value);if(el()===0&&Number.isInteger(n)&&n>=min&&n<=max){LEN[k]=n;try{localStorage.setItem('gokaku-focus-lengths',JSON.stringify(LEN))}catch(e){}saveT()}focusSettingsUI();tick()})}
+$('#volume').addEventListener('input',ev=>{volume=Number(ev.target.value)/100;$('#volumeOut').textContent=ev.target.value+'%';try{localStorage.setItem('gokaku-volume',String(volume))}catch(e){}});
+$('#volume').addEventListener('change',()=>SE.coin());
+focusSettingsUI();
 render();loop();
 
 /* account sync */
