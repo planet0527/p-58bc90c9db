@@ -249,7 +249,7 @@ textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding
 <nav class="tabs" role="tablist"><button data-tab="dash" aria-selected="true">ホーム</button><button data-tab="sch">予定</button><button data-tab="rec">記録</button><button data-tab="exams">試験</button><button data-tab="help">使い方</button></nav></header>
 <main style="padding-bottom:80px">
 <section class="band" id="dash">
- <div id="banner"></div><div class="chips" id="chips"></div><div id="hero"></div><div id="today"></div><div id="quest"></div><div class="stats" id="stats"></div>
+ <div id="banner"></div><div class="chips" id="chips"></div><div id="hero"></div><div id="today"></div><div id="quest"></div><div id="motivation"></div><div class="stats" id="stats"></div>
  <div class="two" id="lower"><div><h2>学習時間の積み上げ</h2><div class="fig"><svg id="chart" role="img" aria-label="累計学習時間と必要ライン"></svg></div>
   <div class="leg"><span><i style="background:var(--ink)"></i>実績（累計）</span><span><i style="background:var(--red)"></i>試験日までに必要なライン</span></div></div>
   <div><h2>毎日の記録（全試験・16週）</h2><div class="heat" id="heat"></div><div class="leg" id="heatleg"></div></div></div>
@@ -675,8 +675,20 @@ function render(){if(!Array.isArray(state.badges))state.badges=earned();
 renderGenDw();
 
 let C=null;
+function renderMotivation(){
+ const t=today(),start=addDays(t,-((parse(t).getDay()+6)%7)),byDay={};
+ for(const l of state.logs){if(l.d<=t)byDay[l.d]=(byDay[l.d]||0)+l.m}
+ const days=Object.keys(byDay).sort(),total=Object.values(byDay).reduce((a,b)=>a+b,0),best=Math.max(0,...Object.values(byDay)),weeks={};
+ let run=0,longest=0,last=null;for(const d of days){run=last&&diff(last,d)===1?run+1:1;longest=Math.max(longest,run);last=d;const w=addDays(d,-((parse(d).getDay()+6)%7));weeks[w]=(weeks[w]||0)+byDay[d]}
+ const week=weeks[start]||0,goal=state.motivationGoal||180,active=days.filter(d=>d>=start).length,done=(state.materials||[]).filter(x=>ex(x.eid)&&x.done>=x.total).length;
+ const milestones=[['最初の一歩',total>=5,'累計5分'],['積み重ねの力',total>=600,'累計10時間'],['学習習慣',days.length>=7,'累計7学習日'],['教材マスター',done>=1,'教材1冊完了'],['努力の証',total>=3000,'累計50時間']];
+ const fmtM=m=>Math.floor(m/60)+'時間'+m%60+'分';
+ $('#motivation').innerHTML='<div class="tcard" style="margin:16px 0"><h2>成長ノート</h2><p class="why">'+(byDay[t]?'今日も一歩進みました。':'今日は5分から始めても十分です。')+'</p><h3>自分で選ぶ週間チャレンジ</h3><div class="row"><label>今週の学習目標<select id="motGoal">'+[30,60,120,180,300,600,900].map(n=>'<option value="'+n+'" '+(goal===n?'selected':'')+'>'+fmtM(n)+'</option>').join('')+'</select></label></div><p><b>'+fmtM(week)+'</b> / '+fmtM(goal)+' · '+active+'日学習</p><progress style="width:100%" max="'+goal+'" value="'+Math.min(goal,week)+'"></progress><p class="hint">'+(week>=goal?'週間チャレンジ達成！休息も大切に。':'残り '+fmtM(goal-week)+'。目標はいつでも変更できます。')+'</p><h3>個人ベスト</h3><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"><div>1日最高<br><b>'+fmtM(best)+'</b></div><div>週間最高<br><b>'+fmtM(Math.max(0,...Object.values(weeks)))+'</b></div><div>累計学習日<br><b>'+days.length+'日</b></div><div>連続学習の最高記録<br><b>'+longest+'日</b></div></div><h3>成長のマイルストーン</h3>'+milestones.map(m=>'<p style="margin:8px 0"><b>'+(m[1]?'✓ ':'○ ')+m[0]+'</b> <span class="hint">'+m[2]+' · '+(m[1]?'達成':'未達成')+'</span></p>').join('')+'<details><summary>勉強する理由・未来の自分へのメッセージ</summary><textarea id="motReason" maxlength="1000" rows="3" style="width:100%;box-sizing:border-box;font:inherit" placeholder="資格を取ったら何をしたい？">'+esc(state.motivationReason||'')+'</textarea><button type="button" id="motSave">保存</button></details></div>';
+ $('#motGoal').onchange=e=>{state.motivationGoal=Number(e.target.value);save();renderMotivation()};
+ $('#motSave').onclick=()=>{state.motivationReason=$('#motReason').value;save();toast('メッセージを保存しました')};
+}
 function renderDash(){const e=cur();
- if(!e){$('#chips').innerHTML='';$('#hero').innerHTML=`<div class="guide"><h2>ようこそ。3ステップで準備完了です</h2><ol><li><b>取りたい資格とレベルを選ぶ</b>：必要な勉強時間の目安が決まります。</li><li><b>生活リズムを選ぶ</b>：通勤・昼休み・夜などのスキマ時間から、毎日の予定を自動で組みます。</li><li><b>毎日「やった！」を押す</b>：あとはアプリが計算し直してくれます。完璧じゃなくて大丈夫。</li></ol><button class="pri" data-add>① 試験を追加する</button> <button data-go="sch">② 生活リズムを設定</button> <button class="ghost" data-sample>サンプルを見てみる</button></div>`;$('#today').innerHTML='';$('#stats').innerHTML='';$('#quest').innerHTML='';$('#lower').hidden=true;C=null;renderHeat();return}
+ if(!e){$('#chips').innerHTML='';$('#hero').innerHTML=`<div class="guide"><h2>ようこそ。3ステップで準備完了です</h2><ol><li><b>取りたい資格とレベルを選ぶ</b>：必要な勉強時間の目安が決まります。</li><li><b>生活リズムを選ぶ</b>：通勤・昼休み・夜などのスキマ時間から、毎日の予定を自動で組みます。</li><li><b>毎日「やった！」を押す</b>：あとはアプリが計算し直してくれます。完璧じゃなくて大丈夫。</li></ol><button class="pri" data-add>① 試験を追加する</button> <button data-go="sch">② 生活リズムを設定</button> <button class="ghost" data-sample>サンプルを見てみる</button></div>`;$('#today').innerHTML='';$('#stats').innerHTML='';$('#quest').innerHTML='';$('#motivation').innerHTML='';$('#lower').hidden=true;C=null;renderHeat();return}
  $('#lower').hidden=false;const c=C=calc(e);c.e=e;
  const sorted=state.exams.slice().sort((a,b)=>a.date<b.date?-1:1);
  $('#chips').innerHTML=sorted.length>1?sorted.map(x=>{const k=calc(x);return `<button class="chip" style="--c:${COL[x.color%COL.length]}" data-sel="${esc(x.id)}" aria-pressed="${x.id===e.id}">${esc(x.name)}<small>あと${k.left}日・${k.v[0].replace('<br>','')}</small></button>`}).join(''):'';
@@ -695,7 +707,7 @@ function renderDash(){const e=cur();
   <div><div class="lbl"><span>点数の見通し（${e.max}点満点）</span></div><div class="gauge"><div class="prj" style="left:${pct(c.s)}%;width:${pct(c.proj)-pct(c.s)}%"></div><div class="cur" style="width:${pct(c.s)}%"></div>${ticks}</div>
   <div class="leg"><span><i style="background:var(--ink)"></i>現在 <b>${c.sc.length?c.s:'未記録'}</b></span><span><i style="background:var(--blue)"></i>予測 <b>${c.proj}</b></span><span>${c.proj>=e.target?'目標に届く見込み':c.proj>=e.pass?'合格ラインは越える見込み':'合格ラインに届かない見込み'}</span></div></div></div></div>`;
  $('#stats').innerHTML=[[h1(c.remain)+'h','残り必要時間',c.pace?'実績ペース基準':'目安時間基準'],[h1(c.need)+'h','目標までの必要時間','最新点数の時点から'],[c.pace?(Math.round(c.pace*10)/10)+'点':'—','1時間あたりの伸び',c.pace?'直近2回の点数から':'点数を2回記録で算出'],[h1(c.total)+'h','この試験の累計',c.L.length+'回の記録']].map(([n,l,s])=>`<div class="stat"><span class="num">${n}</span><small>${l}</small><small>${s}</small></div>`).join('');
- draw();renderHeat();renderToday(c);renderQuest();bossAfter(e);countUp($('#hero'));countUp($('#stats'))}
+ draw();renderHeat();renderToday(c);renderQuest();renderMotivation();bossAfter(e);countUp($('#hero'));countUp($('#stats'))}
 
 const svg=$('#chart');
 function draw(){if(!C||tab!=='dash')return;const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;const c=C,e=c.e,t=c.t;
