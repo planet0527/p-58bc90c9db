@@ -305,7 +305,7 @@ textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding
  <form class="row" id="logF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>時間<input type="number" name="h" min="0" max="24" step="1" value="1"></label><label>分<input type="number" name="m" min="0" max="59" step="1" value="0"></label><label style="flex:1 1 160px">メモ<input name="note" placeholder="過去問 午前 2回分"></label><button class="pri">記録</button><div class="quick"><span class="hint">今日にワンタップで追加：</span><button type="button" data-q="15">+15分</button><button type="button" data-q="30">+30分</button><button type="button" data-q="60">+1時間</button></div></form>
  <h2>模試・過去問の点数を記録</h2>
  <form class="row" id="scoreF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>点数<input type="number" name="s" min="0" step="1" required></label><button class="pri">記録</button><p class="hint" style="flex-basis:100%">点数を記録すると、そこから先の必要時間が自動で計算し直されます。</p></form>
- <div class="two"><div><h2>学習ログ</h2><div class="scroll"><table><thead><tr><th>日付</th><th>試験</th><th>メモ</th><th style="text-align:right">時間</th><th></th></tr></thead><tbody id="logT"></tbody></table></div></div>
+ <div class="tcard" style="margin:20px 0"><h2>記録を検索</h2><div class="row"><label>資格<select id="historyExam"></select></label><label>開始日<input type="date" id="historyFrom"></label><label>終了日<input type="date" id="historyTo"></label><label>メモ検索<input type="search" id="historyQuery" placeholder="過去問、参考書など"></label><button type="button" id="historyClear">絞り込み解除</button></div><p id="historySummary" role="status"></p></div><div class="two"><div><h2>学習ログ</h2><div class="scroll"><table><thead><tr><th>日付</th><th>試験</th><th>メモ</th><th style="text-align:right">時間</th><th></th></tr></thead><tbody id="logT"></tbody></table></div><div class="row"><button id="historyPrev" type="button">前へ</button><span id="historyPage"></span><button id="historyNext" type="button">次へ</button></div></div>
  <div><h2>点数の履歴</h2><table><thead><tr><th>日付</th><th>試験</th><th style="text-align:right">点数</th><th></th></tr></thead><tbody id="scoreT"></tbody></table></div></div>
 </section>
 <section class="band" id="exams" hidden>
@@ -732,18 +732,29 @@ function renderWeekly(){
  const fmtM=m=>Math.floor(m/60)+'時間 '+m%60+'分';
  const delta=total-previous;
  $('#reportBody').innerHTML='<p class="hint">'+esc(start)+' ～ '+esc(end)+'</p><div style="display:flex;flex-wrap:wrap;gap:20px"><div>合計<br><b class="num">'+fmtM(total)+'</b></div><div>学習日数<br><b class="num">'+active+'日</b></div><div>経過日あたり<br><b class="num">'+Math.round(total/elapsed)+'分</b></div></div><p class="hint">前週全体との差：'+(delta>=0?'+':'−')+fmtM(Math.abs(delta))+(reportOffset===0?'（今週は途中経過）':'')+'</p><div style="display:grid;gap:6px">'+days.map((d,i)=>'<div style="display:grid;grid-template-columns:65px 1fr 55px;gap:8px;align-items:center"><span>'+esc(d.slice(5))+' '+wk(d)+'</span><div class="bar" style="margin:0"><i style="width:'+100*minutes[i]/max+'%"></i></div><span style="text-align:right">'+minutes[i]+'分</span></div>').join('')+'</div><p class="why">'+(!total?'この週にはまだ学習記録がありません。':active<=2?'短い時間から始めて、学習できる日を増やしてみましょう。':'学習時間に加えて、解けるようになった問題や苦手分野も振り返りましょう。')+'</p>';
- $('#reportNext').disabled=reportOffset>=0;const note=$('#reportNote');const key=start+'|'+reportExam;if(note.dataset.key!==key||!note.matches(':focus')){note.value=state.weekNotes?.[key]||'';note.dataset.key=key}
+ $('#reportNext').disabled=reportOffset>=0;const note=$('#reportNote');const key=start+'|'+reportExam;if(note.dataset.key!==key||(!note.matches(':focus')&&note.value===note.dataset.saved)){note.value=state.weekNotes?.[key]||'';note.dataset.key=key;note.dataset.saved=note.value}
 }
 $('#reportExam').onchange=e=>{reportExam=e.target.value;renderWeekly()};
 $('#reportPrev').onclick=()=>{reportOffset--;renderWeekly()};
 $('#reportNext').onclick=()=>{reportOffset=Math.min(0,reportOffset+1);renderWeekly()};
-$('#reportSave').onclick=()=>{const n=$('#reportNote');state.weekNotes=state.weekNotes||{};state.weekNotes[n.dataset.key]=n.value.trim();save();toast('振り返りを保存しました')};
-function renderRec(){renderWeekly();const nm=id=>esc(ex(id)?.name||'(削除済み)');
- const L=state.logs.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,80);
- $('#logT').innerHTML=L.length?L.map(l=>`<tr><td class="n">${esc(l.d.slice(5).replace('-','/'))}（${wk(l.d)}）</td><td>${nm(l.eid)}</td><td>${esc(l.note||'')}</td><td class="n">${Math.floor(l.m/60)?Math.floor(l.m/60)+'時間':''}${l.m%60?l.m%60+'分':''}</td><td><button data-dl="${esc(l.id)}">削除</button></td></tr>`).join(''):'<tr><td colspan="5" class="why">まだ記録がありません。下の「集中する」から始めると自動で記録されます。</td></tr>';
- const S=state.exams.flatMap(e=>e.scores.map((s,i)=>({...s,e,i}))).sort((a,b)=>a.d<b.d?1:-1);
+$('#reportSave').onclick=()=>{const n=$('#reportNote');state.weekNotes=state.weekNotes||{};state.weekNotes[n.dataset.key]=n.value.trim();n.dataset.saved=n.value;save();toast('振り返りを保存しました')};
+let historyPage=0;
+function renderRec(){renderWeekly();renderHistory()}
+function renderHistory(){const sel=$('#historyExam'),old=sel.value;sel.innerHTML='<option value="">すべての資格</option>'+state.exams.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('');sel.value=ex(old)?old:'';
+ const from=$('#historyFrom').value,to=$('#historyTo').value,query=$('#historyQuery').value.trim().toLocaleLowerCase(),eid=sel.value;
+ const match=l=>(!eid||l.eid===eid)&&(!from||l.d>=from)&&(!to||l.d<=to);
+ const nm=id=>esc(ex(id)?.name||'(削除済み)');
+ const filtered=state.logs.filter(l=>match(l)&&(!query||String(l.note||'').toLocaleLowerCase().includes(query))).sort((a,b)=>b.d.localeCompare(a.d));
+ const pages=Math.max(1,Math.ceil(filtered.length/30));historyPage=Math.max(0,Math.min(historyPage,pages-1));const L=filtered.slice(historyPage*30,(historyPage+1)*30),mins=filtered.reduce((a,l)=>a+l.m,0);
+ $('#historySummary').textContent=from&&to&&from>to?'開始日は終了日以前にしてください':filtered.length+'件・合計 '+Math.floor(mins/60)+'時間 '+mins%60+'分';
+ $('#historyPage').textContent=(historyPage+1)+' / '+pages;$('#historyPrev').disabled=historyPage===0;$('#historyNext').disabled=historyPage>=pages-1;
+ $('#logT').innerHTML=L.length?L.map(l=>`<tr><td class="n">${esc(l.d.replaceAll('-','/'))}（${wk(l.d)}）</td><td>${nm(l.eid)}</td><td>${esc(l.note||'')}</td><td class="n">${Math.floor(l.m/60)?Math.floor(l.m/60)+'時間':''}${l.m%60?l.m%60+'分':''}</td><td><button data-dl="${esc(l.id)}">削除</button></td></tr>`).join(''):'<tr><td colspan="5" class="why">該当する学習記録がありません。検索条件を変更してください。</td></tr>';
+ const S=state.exams.flatMap(e=>e.scores.map((s,i)=>({...s,e,i}))).filter(s=>match({...s,eid:s.e.id})).sort((a,b)=>a.d<b.d?1:-1);
  $('#scoreT').innerHTML=S.length?S.map(s=>`<tr><td class="n">${esc(s.d.replaceAll('-','/'))}</td><td>${esc(s.e.name)}</td><td class="n">${esc(s.s)} / ${esc(s.e.max)}</td><td><button data-ds="${esc(s.e.id)}|${s.i}">削除</button></td></tr>`).join(''):'<tr><td colspan="4" class="why">模試や過去問の点数を入れると精度が上がります。</td></tr>'}
 
+for(const id of ['historyExam','historyFrom','historyTo','historyQuery'])$('#'+id).addEventListener(id==='historyQuery'?'input':'change',()=>{historyPage=0;renderHistory()});
+ $('#historyClear').onclick=()=>{for(const id of ['historyExam','historyFrom','historyTo','historyQuery'])$('#'+id).value='';historyPage=0;renderHistory()};
+ $('#historyPrev').onclick=()=>{historyPage--;renderHistory()};$('#historyNext').onclick=()=>{historyPage++;renderHistory()};
 function renderExams(){$('#elist').innerHTML=state.exams.length?state.exams.slice().sort((a,b)=>a.date<b.date?-1:1).map(e=>{const c=calc(e);return `<div class="ecard" style="--c:${COL[e.color%COL.length]}"><div><b>${esc(e.name)}</b>${e.lv!=null?`<span class="tag">${LVS[e.lv][0]}</span>`:''}<small>${esc(e.date.replaceAll('-','/'))}（あと${c.left}日）・合格${esc(e.pass)} / 目標${esc(e.target)} / 満点${esc(e.max)}・目安${esc(e.H)}時間・週${esc(e.days)}日×最大${esc(e.cap)}時間</small></div><button data-ed="${esc(e.id)}">編集</button><button class="ghost" data-de="${esc(e.id)}">削除</button><div class="subs"><span class="hint">科目（タップで 苦手→普通→得意）：</span>${(e.subs||[]).map(x=>`<button data-sub="${esc(e.id)}|${esc(x.id)}" data-l="${x.l}">${esc(x.n)}・${['苦手','普通','得意'][x.l]}</button>`).join('')}<input placeholder="科目を追加" data-addsub="${esc(e.id)}" aria-label="科目を追加"></div></div>`}).join(''):'<p class="why">まだ試験がありません。</p>'}
 
 
