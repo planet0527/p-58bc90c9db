@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>合格逆算ノート</title>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow">
+<meta name="theme-color" content="#d4252f">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="合格逆算">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: quiet study desk, calm and focused, no noise
+   IDEA: a graded answer sheet — graph paper marked with a teacher's red pen
+   PICTURE: the countdown sheet: days left, hours per day, a red verdict stamp, score gauge
+   COLOUR/TYPE: white paper, graphite ink, red pen; Zen Old Mincho numerals over Zen Kaku Gothic
+   LAYOUT: header + tabs, hero sheet, stats, burn-up chart, heatmap; dark full-screen focus mode */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#111317);--paper:light-dark(#ffffff,#171a1f);--ink:light-dark(#1b1d22,#ecebe6);--mut:light-dark(#646a75,#9ea3ad);--line:light-dark(#e3e5ea,#2a2e35);--grid:light-dark(#eef1f5,#1d2026);--soft:light-dark(#f4f5f7,#1e2127);--red:light-dark(#d4252f,#ff6166);--blue:light-dark(#2d5b8a,#86b6e6)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(18px,3vw,40px) max(4vw,16px);max-width:1240px;margin:0 auto}
+.num{font-family:"Zen Old Mincho",serif;font-variant-numeric:tabular-nums;font-weight:900}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;border-bottom:1px solid var(--line);padding-bottom:12px!important}
+h1{font:900 26px/1.1 "Zen Old Mincho",serif;margin:0}h1 span{color:var(--red)}
+h2{font-size:19px;margin:0 0 10px}
+.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+button,.btn{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--red) 55%,transparent);outline-offset:2px}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pri{background:var(--red);color:#fff;border-color:var(--red);font-weight:700}
+.ghost{border-color:transparent;background:transparent;color:var(--mut)}
+.sync{font-size:13px;color:var(--mut)}
+.banner{background:var(--soft);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;margin-bottom:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.chip{flex:none;text-align:left;line-height:1.3;padding:8px 14px;border-left:5px solid var(--c)}
+.chip small{display:block;color:var(--mut);font-size:13px}
+.chip[aria-pressed=true]{background:var(--soft);border-color:var(--ink);border-left-color:var(--c)}
+.sheet{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px 36px;padding:clamp(18px,3vw,34px);border:1px solid var(--line);border-radius:16px;background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;position:relative}
+.ename{font-size:15px;color:var(--mut);margin:0 0 4px}.ename b{color:var(--ink);font-size:20px;display:block}
+.big{display:flex;flex-wrap:wrap;gap:4px 28px;align-items:baseline;margin-top:8px}
+.big div{white-space:nowrap}.big .num{font-size:clamp(54px,9vw,92px);line-height:1}.big .num.r{color:var(--red)}
+.big small{font-size:15px;color:var(--mut);margin:0 4px}
+.sheet>div:first-child{position:relative;padding-right:120px}.stamp{position:absolute;top:0;right:0;width:108px;height:108px;border-radius:50%;border:3px double var(--red);color:var(--red);display:grid;place-items:center;text-align:center;font:700 15px/1.25 "Zen Old Mincho",serif;transform:rotate(-9deg);padding:10px;background:color-mix(in srgb,var(--paper) 80%,transparent)}
+.stamp.warn,.stamp.bad{border-style:solid;background:color-mix(in srgb,var(--red) 10%,var(--paper))}.stamp.mut{border-color:var(--mut);color:var(--mut)}
+.side{display:flex;flex-direction:column;gap:18px;justify-content:center}
+.lbl{font-size:14px;color:var(--mut);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.lbl b{color:var(--ink);white-space:nowrap}
+.bar{height:14px;border-radius:7px;background:var(--soft);border:1px solid var(--line);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ink);border-radius:7px;transition:width .5s}
+.gauge{position:relative;height:22px;margin-top:22px;background:var(--soft);border:1px solid var(--line);border-radius:6px}
+.gauge .cur{position:absolute;inset:0 auto 0 0;background:var(--ink);border-radius:5px 0 0 5px}
+.gauge .prj{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,var(--blue) 0 4px,transparent 4px 8px);opacity:.75}
+.gauge .tk{position:absolute;top:-20px;bottom:-4px;width:2px;background:var(--mut)}.gauge .tk.t{background:var(--red)}
+.gauge .tk span{position:absolute;top:-2px;left:4px;font-size:12px;white-space:nowrap;color:var(--mut)}.gauge .tk.t span{color:var(--red)}
+.gauge .tk.flip span{left:auto;right:4px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--mut);margin-top:8px}.leg b{color:var(--ink)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.why{font-size:13px;color:var(--mut);margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 26px}
+.stat{border-top:2px solid var(--ink);padding-top:8px}.stat .num{font-size:30px;line-height:1.1}.stat small{display:block;font-size:13px;color:var(--mut)}
+.two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px}
+.fig{position:relative;min-height:280px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:3px;aspect-ratio:16/7.6;max-width:520px}
+.heat i{border-radius:3px;background:var(--soft)}
+.heat i[data-l="1"]{background:color-mix(in srgb,var(--red) 28%,var(--soft))}.heat i[data-l="2"]{background:color-mix(in srgb,var(--red) 52%,var(--soft))}.heat i[data-l="3"]{background:color-mix(in srgb,var(--red) 76%,var(--soft))}.heat i[data-l="4"]{background:var(--red)}
+.heat i.today{outline:2px solid var(--ink);outline-offset:-1px}
+form.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:16px;border:1px solid var(--line);border-radius:12px;margin-bottom:18px}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:4px}
+input,select{font:inherit;font-size:16px;min-height:44px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+input[type=number]{width:7.5em}
+.hint{font-size:13px;color:var(--mut);margin:2px 0 0}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}th{font-size:13px;color:var(--mut);font-weight:500}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}td button{min-height:36px;padding:0 10px;font-size:13px}
+.elist{display:grid;gap:10px}.ecard{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;border:1px solid var(--line);border-left:6px solid var(--c);border-radius:10px;padding:12px 14px}.ecard small{color:var(--mut);display:block}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink);padding:22px;width:min(560px,94vw)}dialog::backdrop{background:#0008}
+dialog form{display:grid;grid-template-columns:1fr 1fr;gap:12px}dialog .full{grid-column:1/-1}dialog input{width:100%}
+.acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+details{margin-top:22px;font-size:14px;color:var(--mut)}summary{cursor:pointer;color:var(--ink);min-height:32px}
+.empty{text-align:center;padding:60px 16px;border:1px dashed var(--line);border-radius:16px}
+.fab{position:fixed;right:max(16px,3vw);bottom:max(16px,3vh);z-index:5;min-height:56px;padding:0 24px;border-radius:28px;box-shadow:0 6px 20px #0003;font-size:16px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 8px 8px 16px;display:flex;gap:10px;align-items:center;z-index:9;font-size:14px}.toast button{min-height:36px;background:transparent;color:inherit;border-color:currentColor}
+#focus{position:fixed;inset:0;z-index:20;background:#0d0e11;color:#e9e7e2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px}
+#focus.on{display:flex}#focus select,#focus button{background:#16181d;color:#e9e7e2;border-color:#2b2f37}
+#focus .modes button[aria-pressed=true]{border-color:#ff6166;color:#ff6166}
+.ring{position:relative;width:min(78vw,360px);aspect-ratio:1}.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(52px,15vw,88px);letter-spacing:.02em}
+.fsub{color:#9ea3ad;font-size:14px;text-align:center}
+.fx{position:absolute;top:14px;right:14px}
+button{transition:transform .12s,background .2s,box-shadow .2s}button:active{transform:scale(.94)}
+.pri:hover{box-shadow:0 4px 14px color-mix(in srgb,var(--red) 40%,transparent)}
+.me{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.lv{display:flex;align-items:center;gap:8px;font-size:14px;white-space:nowrap}.lv b{font:900 20px "Zen Old Mincho",serif;color:var(--red)}
+.xp{width:110px;height:9px;border-radius:5px;background:var(--soft);border:1px solid var(--line);overflow:hidden}.xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),#f0a030);transition:width .9s cubic-bezier(.2,1.4,.4,1)}
+.lv.up{animation:glow .6s 4}@keyframes glow{50%{transform:scale(1.08)}}
+.fire{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:14px;white-space:nowrap}.fire svg{width:18px;height:22px;transform-origin:50% 100%;animation:flick .9s ease-in-out infinite alternate}.fire.off svg{filter:grayscale(1);opacity:.4;animation:none}
+@keyframes flick{0%{transform:scale(1,1) rotate(-4deg)}100%{transform:scale(1.1,.92) rotate(4deg)}}
+.view{animation:fadeUp .35s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}}
+.stamp{animation:stampIn .5s cubic-bezier(.3,1.6,.5,1) both .3s}
+@keyframes stampIn{0%{opacity:0;transform:scale(2.6) rotate(-30deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotate(-9deg)}}
+.bar i.clear{background:linear-gradient(90deg,var(--red),#f0a030,var(--red));background-size:200% 100%;animation:shine 1.4s linear infinite}@keyframes shine{to{background-position:-200% 0}}
+.xpf{position:fixed;z-index:45;pointer-events:none;font:900 28px "Zen Old Mincho",serif;color:var(--red);white-space:nowrap;text-shadow:0 2px 0 var(--bg),0 0 12px var(--bg);animation:floatUp 1.4s ease-out forwards}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,0) scale(.5)}15%{opacity:1;transform:translate(-50%,-16px) scale(1.2)}100%{opacity:0;transform:translate(-50%,-100px) scale(1)}}
+#fxc{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:42}
+.cele{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:#0006;animation:fade .25s both;cursor:pointer;padding:16px}
+.cele>div{background:var(--paper);color:var(--ink);border-radius:22px;padding:30px 36px;text-align:center;max-width:420px;animation:popIn .5s cubic-bezier(.3,1.6,.5,1) both;box-shadow:0 24px 70px #0006}
+.cele .r2{width:124px;height:124px;border-radius:50%;border:5px double var(--red);color:var(--red);display:grid;place-items:center;margin:0 auto 16px;font:900 32px "Zen Old Mincho",serif;animation:stampIn .55s cubic-bezier(.3,1.6,.5,1) both .2s;white-space:nowrap}
+.cele h3{font:900 clamp(26px,6vw,36px)/1.2 "Zen Old Mincho",serif;margin:0 0 6px}.cele p{margin:0;color:var(--mut)}
+@keyframes popIn{from{opacity:0;transform:scale(.6) translateY(30px)}}@keyframes fade{from{opacity:0}}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:14px 10px;margin-top:8px}
+.bd{text-align:center;font-size:12px;color:var(--mut);line-height:1.3}
+.bd i{display:grid;place-items:center;width:60px;height:60px;margin:0 auto 6px;border-radius:50%;border:2px dashed var(--line);font:900 17px "Zen Old Mincho",serif;font-style:normal;color:var(--line)}
+.bd.on{color:var(--ink)}.bd.on i{border:4px double var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--paper));transform:rotate(-9deg)}
+.bd.new i{animation:stampIn .6s cubic-bezier(.3,1.6,.5,1) both .4s}
+.ring.run svg{animation:breathe 4s ease-in-out infinite}@keyframes breathe{50%{filter:drop-shadow(0 0 16px #ff6166aa)}}
+.ring.last .num{animation:beat 1s infinite}@keyframes beat{12%{transform:scale(1.08)}}
+.fmsg{color:#e9e7e2;font-size:17px;min-height:1.6em;text-align:center}
+.quick{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex-basis:100%}.quick button{border-style:dashed;font-weight:700}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+.lvls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.lvls button{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;padding:8px 6px;min-height:64px}.lvls button small{font:900 20px "Zen Old Mincho",serif;color:var(--red)}
+.lvls button[aria-pressed=true]{border:2px solid var(--red);background:color-mix(in srgb,var(--red) 8%,var(--paper));animation:popIn .3s cubic-bezier(.3,1.6,.5,1)}
+.plan{background:var(--soft);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.7}.plan .num{font-size:34px;color:var(--red);margin:0 4px}.plan b{white-space:nowrap}.plan .warn{color:var(--red);font-weight:700}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--red);color:var(--red);border-radius:20px;padding:0 8px;margin-left:6px;vertical-align:2px}
+.urg{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;font-size:14px;color:var(--mut);margin:14px 2px 8px}.urg b{font:900 20px "Zen Old Mincho",serif;color:var(--ink);font-variant-numeric:tabular-nums}.urg.hot b{color:var(--red)}.urg.hot{animation:hot 1.6s ease-in-out infinite}@keyframes hot{50%{opacity:.7}}
+.tcard{border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:4px}
+.tcard h2{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}.tcard h2 small{font-size:13px;color:var(--mut);font-weight:400}
+.slot{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
+.slot .tm{font:900 19px "Zen Old Mincho",serif;font-variant-numeric:tabular-nums}.slot .tm small{display:block;font:400 12px "Zen Kaku Gothic New",sans-serif;color:var(--mut)}
+.slot .bd2{line-height:1.4}.slot .bd2 small{display:block;color:var(--mut);font-size:13px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.slot.done{opacity:.55}.slot.done .bd2 b{text-decoration:line-through}.slot .ok{font:900 18px "Zen Old Mincho",serif;color:var(--red);border:3px double var(--red);border-radius:50%;width:46px;height:46px;display:grid;place-items:center;transform:rotate(-9deg)}
+.slot.now{background:color-mix(in srgb,var(--red) 9%,transparent);border-radius:10px;border-top-color:transparent;animation:nowp 2s ease-in-out infinite}@keyframes nowp{50%{background:color-mix(in srgb,var(--red) 16%,transparent)}}
+.slot .bn{font-size:11px;color:#b9770e;border:1px solid #e0a030;border-radius:10px;padding:0 6px;margin-left:6px}
+.slot.miss .tm{color:var(--mut)}
+.nowtag{color:var(--red);font-weight:700;font-size:13px}
+.calm{background:color-mix(in srgb,var(--blue) 10%,var(--paper));border-radius:12px;padding:14px 16px;line-height:1.7}
+.calm b{color:var(--blue)}
+.week{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:10px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.day{scroll-snap-align:start;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:150px}.day h3{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between}.day h3 small{color:var(--mut);font-weight:400}
+.day.td{border:2px solid var(--ink)}.day.rest{background:color-mix(in srgb,var(--blue) 9%,var(--paper));border-color:transparent}
+.blk{border-left:4px solid var(--c);background:var(--soft);border-radius:6px;padding:5px 8px;margin-bottom:6px;font-size:12.5px;line-height:1.35}.blk b{font-size:13px}.blk.bon{border-left-style:dashed;opacity:.8}
+.feas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px 32px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,28px);background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+.feas .num{font-size:clamp(44px,7vw,68px);line-height:1}.feas .lead{font-size:15px;color:var(--mut)}
+.cmp{display:grid;gap:10px}.cmp div{font-size:14px}.cmp .bar{height:18px}
+.ltype{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.ltype button[aria-pressed=true]{border:2px solid var(--red);background:color-mix(in srgb,var(--red) 8%,var(--paper))}
+.slots input,.slots select{min-height:40px;font-size:15px}.slots input[type=time]{width:8.6em}.slots input[type=number]{width:5em}.slots td{padding:5px 4px}
+.dows{display:flex;gap:6px;flex-wrap:wrap}.dows button{width:52px;padding:0}.dows button[aria-pressed=true]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.helpw{max-width:760px}.helpw h2{margin-top:28px}.helpw p,.helpw li{line-height:1.85}.helpw .calm{margin:10px 0}
+.guide{border:2px solid var(--ink);border-radius:16px;padding:18px 20px;margin-bottom:16px}.guide ol{margin:8px 0 12px;padding-left:1.3em;line-height:1.9}
+.reas{font-size:14px;line-height:1.7;margin:10px 0 0;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--paper) 75%,transparent);border:1px dashed var(--line)}
+.reas button{min-height:36px;font-size:13px;margin-top:6px}
+@media(max-width:600px){.slots thead{display:none}.slots tr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) minmax(0,1fr) auto;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}.slots td{border:0;padding:0}.slots td:first-child{grid-column:1/-1}.slots input,.slots select{width:100%!important}}
+@media(max-width:700px){.feas{grid-template-columns:minmax(0,1fr)}.tabs button{padding:0 6px;font-size:14px}}
+.h3{font-size:16px;margin:22px 0 4px}
+textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);margin-top:8px;word-break:break-all}
+.bkrow{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.bkrow span{flex:1 1 200px}.bkrow button{min-height:36px;font-size:13px}
+.prev{border:2px solid var(--blue);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}
+.phase{display:inline-flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-top:10px;font-size:14px}.phase b{background:var(--ink);color:var(--bg);border-radius:6px;padding:1px 8px;font-size:13px}
+.subs{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;align-items:center}.subs button{min-height:34px;font-size:13px;padding:0 10px;border-radius:17px}
+.subs button[data-l="0"]{border-color:var(--red);color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--paper))}.subs button[data-l="2"]{border-color:var(--blue);color:var(--blue)}
+.subs input{min-height:34px;font-size:14px;width:9em}
+.rev{margin-top:14px}.rev summary{font-weight:700}.rev .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}.rev .num{font-size:26px;display:block}
+.sdw{display:flex;gap:2px}.sdw button{min-height:34px;width:30px;padding:0;font-size:12px;border-radius:6px}.sdw button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.gen{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px;color:var(--ink);font-size:15px}.gen summary{font-weight:700;min-height:36px;display:flex;align-items:center}
+.gen form{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:8px}.gen .full{grid-column:1/-1}.gen input,.gen select{width:100%}
+.ecard .subs{flex:1 1 100%}.ecard>div:first-child{flex:1 1 220px}#addE{white-space:nowrap}
+.cele .rays{position:fixed;left:50%;top:50%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;background:repeating-conic-gradient(from 0deg,#ffffff22 0 9deg,transparent 9deg 18deg);animation:spin 14s linear infinite;pointer-events:none;z-index:-1}
+.cele{isolation:isolate}@keyframes spin{to{transform:rotate(360deg)}}
+.boss{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:center}
+.mon{width:76px;height:66px;animation:bob 2.4s ease-in-out infinite;overflow:visible}@keyframes bob{50%{transform:translateY(-4px) scale(1.02,.98)}}
+.boss.hit .mon{animation:hitk .6s}@keyframes hitk{15%{transform:translateX(-8px) rotate(-8deg);filter:brightness(2.2) saturate(0)}35%{transform:translateX(7px) rotate(5deg)}55%{transform:translateX(-4px)}75%{transform:translateX(2px)}}
+.boss.hit{animation:shk .4s}@keyframes shk{25%{transform:translate(2px,-2px)}50%{transform:translate(-2px,2px)}}
+.boss.dead .mon{animation:none;filter:grayscale(1);opacity:.6;transform:rotate(90deg) translateX(10px)}
+.hp{height:13px;background:var(--soft);border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-top:6px}.hp i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#2f8a5b,#8bc34a);transition:width 1.1s cubic-bezier(.3,1.3,.5,1) .25s}.hp i.mid{background:linear-gradient(90deg,#e0a030,#f0c040)}.hp i.lo{background:linear-gradient(90deg,var(--red),#ff8a65)}
+.boss small{font-size:12px;color:var(--mut)}
+.qcard{border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px 20px;align-items:center}
+.qcard h2{grid-column:1/-1;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}.qcard h2 small{font-size:13px;color:var(--mut);font-weight:400}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:7px 0}.qrow .bar{height:8px;margin-top:4px}.qrow small{color:var(--mut);font-size:12px}
+.qrow .got{font:900 13px "Zen Old Mincho",serif;color:var(--red);border:2px solid var(--red);border-radius:50%;width:40px;height:40px;display:grid;place-items:center;transform:rotate(-10deg)}
+.qrow button.pri{animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{transform:scale(1.07);box-shadow:0 0 0 6px color-mix(in srgb,var(--red) 20%,transparent)}}
+.chestb{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;min-height:0;padding:0;font-size:13px;color:var(--mut)}
+.chestb svg{width:96px;height:84px;filter:grayscale(.85);opacity:.55;transition:filter .3s}.chestb.ready svg{filter:none;opacity:1;animation:wig 1s ease-in-out infinite;drop-shadow:0 0 0}.chestb.ready{color:var(--red);font-weight:700}.chestb.done svg{filter:none;opacity:.5}
+@keyframes wig{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-8deg) scale(1.06)}80%{transform:rotate(8deg) scale(1.06)}90%{transform:rotate(-4deg)}}
+.chfx{position:fixed;inset:0;z-index:44;display:grid;place-items:center;background:#000b;cursor:pointer;isolation:isolate;animation:fade .2s}
+.chfx .rays{position:fixed;left:50%;top:50%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;background:repeating-conic-gradient(from 0deg,var(--rc,#f0c04055) 0 8deg,transparent 8deg 16deg);animation:spin 10s linear infinite;opacity:0;transition:opacity .4s;z-index:-1}
+.chfx.open .rays{opacity:1}
+.chfx .bx{width:min(46vw,200px);animation:shake2 .12s infinite}.chfx.open .bx{animation:none}.chfx .lid{transition:transform .5s cubic-bezier(.3,1.6,.5,1),opacity .5s;transform-origin:50% 100%}.chfx.open .lid{transform:translateY(-40px) rotate(-25deg);opacity:0}
+@keyframes shake2{25%{transform:translate(-3px,1px) rotate(-3deg)}75%{transform:translate(3px,-1px) rotate(3deg)}}
+.chfx .flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none}.chfx.open .flash{animation:flash .6s}@keyframes flash{10%{opacity:.9}100%{opacity:0}}
+.chfx .card{position:absolute;background:var(--paper);color:var(--ink);border-radius:20px;padding:24px 30px;text-align:center;opacity:0;transform:scale(.4);transition:all .5s cubic-bezier(.3,1.6,.5,1) .25s;box-shadow:0 20px 60px #0008;min-width:240px}
+.chfx.open .card{opacity:1;transform:scale(1)}
+.rar{font:900 15px/1 "Zen Kaku Gothic New",sans-serif;letter-spacing:.1em;display:inline-block;padding:4px 12px;border-radius:20px;color:#fff;margin-bottom:12px}
+.hk{width:110px;height:110px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;font:900 18px/1.2 "Zen Old Mincho",serif;border:5px double currentColor;transform:rotate(-10deg);padding:8px}
+.r0{color:#a0662b}.r1{color:#7d8aa0}.r2{color:#c9940a}.r3{color:#e0457b}.bg0{background:#a0662b}.bg1{background:#7d8aa0}.bg2{background:#c9940a}.bg3{background:linear-gradient(90deg,#ff6b8b,#f0a030,#6ad,#b06ad8)}
+.r3.hk{background:linear-gradient(135deg,#fff0f5,#fff8e0,#eaf6ff);animation:glow3 1.6s ease-in-out infinite}@keyframes glow3{50%{box-shadow:0 0 30px #ff8fb0}}
+.cl i{font-size:13px!important;line-height:1.15;text-align:center;padding:4px}.cl.on i{color:inherit!important;border:4px double currentColor!important;background:color-mix(in srgb,currentColor 8%,var(--paper))!important}.cl b{display:block;font-size:11px;color:var(--mut)}
+.combo{position:fixed;right:8vw;top:38%;z-index:46;pointer-events:none;text-align:center;font:900 22px/1 "Zen Old Mincho",serif;color:var(--red);text-shadow:0 3px 0 var(--bg),0 0 18px var(--bg);animation:slam 1.5s cubic-bezier(.2,1.5,.4,1) forwards}
+.combo b{display:block;font-size:72px}@keyframes slam{0%{opacity:0;transform:scale(3) rotate(-12deg)}15%{opacity:1;transform:scale(1) rotate(-6deg)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px) rotate(-6deg)}}
+.xp.spark{animation:spk 1s}@keyframes spk{30%{box-shadow:0 0 0 3px #f0a03088,0 0 16px #f0a030;transform:scaleY(1.6)}}
+.fire[data-t="1"] svg{width:22px;height:27px}.fire[data-t="2"] svg{width:26px;height:32px;filter:drop-shadow(0 0 4px #f0a030)}.fire[data-t="3"] svg{width:30px;height:36px;filter:drop-shadow(0 0 7px #ff6a30)}.fire[data-t="4"] svg{width:32px;height:38px;filter:hue-rotate(190deg) drop-shadow(0 0 8px #6ad)}
+@media(max-width:600px){.qcard{grid-template-columns:minmax(0,1fr)}.chestb{flex-direction:row;justify-content:center}.combo{right:4vw}.combo b{font-size:56px}}
+@media(max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.sheet{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stamp{width:88px;height:88px;font-size:13px}.sheet>div:first-child{padding-right:0}.ename{padding-right:96px}.tabs{margin-left:0;width:100%}.tabs button{flex:1}}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style></head><body>
+<header class="band"><h1>合格<span>逆算</span>ノート</h1><div class="me"><div class="lv" id="lvb"><b id="lvN">Lv.1</b><span id="lvT"></span><span class="xp"><i id="xpI"></i></span><small class="sync" id="xpR"></small></div><span class="fire" id="fire"><svg viewBox="0 0 20 24" aria-hidden="true"><path d="M10 1c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-7 1-10z" fill="#e0452f"/><path d="M10 12c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#f0a030"/></svg><span id="stN"></span></span><button class="ghost" id="snd" style="min-height:36px;padding:0 10px;font-size:13px">音あり</button><button class="ghost sync" id="sync" data-go="help" style="min-height:36px;padding:0 8px;font-size:13px">この端末に保存</button></div>
+<nav class="tabs" role="tablist"><button data-tab="dash" aria-selected="true">ホーム</button><button data-tab="sch">予定</button><button data-tab="rec">記録</button><button data-tab="exams">試験</button><button data-tab="help">使い方</button></nav></header>
+<main style="padding-bottom:80px">
+<section class="band" id="dash">
+ <div id="banner"></div><div class="chips" id="chips"></div><div id="hero"></div><div id="today"></div><div id="quest"></div><div class="stats" id="stats"></div>
+ <div class="two" id="lower"><div><h2>学習時間の積み上げ</h2><div class="fig"><svg id="chart" role="img" aria-label="累計学習時間と必要ライン"></svg></div>
+  <div class="leg"><span><i style="background:var(--ink)"></i>実績（累計）</span><span><i style="background:var(--red)"></i>試験日までに必要なライン</span></div></div>
+  <div><h2>毎日の記録（全試験・16週）</h2><div class="heat" id="heat"></div><div class="leg" id="heatleg"></div></div></div>
+ <h2 style="margin-top:30px">バッジ</h2><div class="badges" id="badges"></div>
+ <h2 style="margin-top:30px">ハンコ帳 <small class="hint" id="colN"></small></h2><p class="hint" style="margin:-6px 0 10px">毎日のミッションを3つクリアすると宝箱が開けられます。レアなハンコを集めよう。</p><div class="badges" id="colle"></div>
+ <details><summary>逆算のしくみ</summary><p>最新の点数から目標点までの「残り必要時間」を出し、その点数を記録した日以降の学習時間を差し引きます。点数が2回以上記録され、その間の学習時間がわかる場合は<b>あなたの実績ペース（1時間あたり何点伸びたか）</b>で計算します。記録が1回以下のときは、資格とレベル（初心者・中級者・上級者）から決まる「いまの自分から目標点までの目安時間」を使い、高得点ほど1点あたりの時間が増える曲線で見積もります。これを試験日までの学習可能日数（週あたりの学習日数で換算）で割ったものが「1日あたり」です。予測点は、1日の上限時間を毎回やり切った場合の到達見込みです。</p></details>
+</section>
+<section class="band" id="sch" hidden>
+ <div id="feas"></div>
+ <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap;margin-top:26px"><h2 style="margin:0">この1週間の自動スケジュール</h2><button id="ics">スマホのカレンダーに入れる（通知つき）</button></div><p class="hint" style="margin:-4px 0 10px">スキマ時間ごとに、急ぎの試験から順に割り当てています。記録や点数が変わると毎日組み直します。</p>
+ <div class="week" id="week"></div>
+ <h2 style="margin-top:30px">あなたの生活リズム</h2>
+ <p class="hint" style="margin:-4px 0 10px">近いタイプを選ぶとスキマ時間のひな形が入ります。時間や長さは自分の生活に合わせて直してください。</p>
+ <div class="ltype" id="ltype"></div>
+ <details class="gen" id="gen"><summary>質問に答えて、自分用のスキマ時間を作る</summary>
+ <form id="genF"><p class="hint full">ふだんの1日を思い出して入力してください。だいたいでOK。作ったあとで1つずつ直せます。</p>
+  <label>平日のメイン<select name="kind"><option value="work">仕事</option><option value="school">学校</option><option value="home">家事・育児</option><option value="none">特になし（専念）</option></select></label>
+  <label>起きる時間<input type="time" name="wake" value="06:30"></label>
+  <label>家を出る時間<input type="time" name="leave" value="08:00"></label>
+  <label>片道の移動（分）<input type="number" name="move" min="0" max="180" step="5" value="40"></label>
+  <label>移動中に勉強できる？<select name="ms"><option value="1">できる（電車・バスなど）</option><option value="0">できない（車・自転車など）</option></select></label>
+  <label>昼休みに使える時間（分）<input type="number" name="lunch" min="0" max="120" step="5" value="20"></label>
+  <label>帰宅する時間<input type="time" name="home" value="19:00"></label>
+  <label>寝る時間<input type="time" name="bed" value="23:30"></label>
+  <label>夜に使いたい時間（分）<input type="number" name="night" min="0" max="300" step="15" value="60"></label>
+  <label>休みの日に使える時間（分）<input type="number" name="off" min="0" max="600" step="15" value="180"></label>
+  <div class="full"><span class="hint">仕事・学校がある曜日</span><div class="dows" id="genDw"></div></div>
+  <div class="full acts" style="justify-content:flex-start"><button class="pri">この内容でスキマ時間を作る</button></div>
+ </form></details>
+ <div class="scroll"><table class="slots"><thead><tr><th>スキマの名前</th><th>開始</th><th>分</th><th>使う曜日</th><th></th></tr></thead><tbody id="slotT"></tbody></table></div>
+ <button id="addSlot" style="margin-top:10px">＋ スキマ時間を追加</button>
+ <h2 style="margin-top:24px">息抜きデー（勉強しない日）</h2>
+ <p class="hint" style="margin:-4px 0 10px">休む日は予定を入れません。連続記録も途切れません。</p>
+ <div class="dows" id="dows"></div>
+</section>
+<section class="band" id="help" hidden>
+ <div class="helpw" id="bkw">
+  <h2 style="margin-top:0">データの引き継ぎ・復元</h2>
+  <div class="calm" id="bkStat"></div>
+  <h3 class="h3">自動バックアップ（1日1回・7日分）</h3><p class="hint">うっかり消したり、設定を変えすぎたときは、ここから前の日の状態に戻せます。</p><div id="bkList"></div>
+  <h3 class="h3">手動バックアップ</h3><p class="hint">機種変更や、念のための控えに。コードはメモアプリやLINEの自分用トークに貼っておけばOKです。</p>
+  <div class="acts" style="justify-content:flex-start"><button class="pri" id="bkCopy">バックアップコードをコピー</button><button id="bkFile">ファイルで保存</button></div>
+  <textarea id="bkOut" readonly hidden aria-label="バックアップコード"></textarea>
+  <h3 class="h3">復元する</h3><p class="hint">コードを貼り付けるか、保存したファイルを選んでください。中身を確認してから復元します。</p>
+  <textarea id="bkIn" placeholder="GKN1: から始まるコードを貼り付け" aria-label="復元するコード"></textarea>
+  <div class="acts" style="justify-content:flex-start;margin-top:8px"><button id="bkCheck">コードを確認</button><label class="btn" style="display:inline-flex;flex-direction:row;align-items:center;color:var(--ink);font-size:15px">ファイルを選ぶ<input type="file" id="bkFileIn" accept=".json,.txt,application/json,text/plain" hidden></label></div>
+  <div id="bkPrev"></div>
+ </div>
+ <div class="helpw" id="helpw" style="margin-top:34px"></div>
+</section>
+<section class="band" id="rec" hidden>
+ <h2>学習時間を記録</h2>
+ <form class="row" id="logF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>時間<input type="number" name="h" min="0" max="24" step="1" value="1"></label><label>分<input type="number" name="m" min="0" max="59" step="5" value="0"></label><label style="flex:1 1 160px">メモ<input name="note" placeholder="過去問 午前 2回分"></label><button class="pri">記録</button><div class="quick"><span class="hint">今日にワンタップで追加：</span><button type="button" data-q="15">+15分</button><button type="button" data-q="30">+30分</button><button type="button" data-q="60">+1時間</button></div></form>
+ <h2>模試・過去問の点数を記録</h2>
+ <form class="row" id="scoreF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>点数<input type="number" name="s" min="0" step="1" required></label><button class="pri">記録</button><p class="hint" style="flex-basis:100%">点数を記録すると、そこから先の必要時間が自動で計算し直されます。</p></form>
+ <div class="two"><div><h2>学習ログ</h2><div class="scroll"><table><thead><tr><th>日付</th><th>試験</th><th>メモ</th><th style="text-align:right">時間</th><th></th></tr></thead><tbody id="logT"></tbody></table></div></div>
+ <div><h2>点数の履歴</h2><table><thead><tr><th>日付</th><th>試験</th><th style="text-align:right">点数</th><th></th></tr></thead><tbody id="scoreT"></tbody></table></div></div>
+</section>
+<section class="band" id="exams" hidden>
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px"><div><h2 style="margin:0">試験・資格</h2><p class="hint" style="margin:2px 0 0">科目の得意・苦手を付けると、苦手な科目ほど予定に多く入ります。</p></div><button class="pri" id="addE">＋ 試験を追加</button></div>
+ <div class="elist" id="elist"></div>
+</section>
+</main>
+<button class="pri fab" id="fab">集中する</button>
+<dialog id="dlg"><form id="eF"><h2 class="full" id="dlgT">試験を追加</h2>
+ <label class="full">取りたい資格<select name="preset" id="pre"></select></label>
+ <div class="full" id="lvBox"><span class="hint" style="display:block;margin-bottom:6px">いまのレベル</span><div class="lvls" id="lvls"></div><p class="hint" id="lvD"></p></div>
+ <label class="full">試験・資格の名前<input name="name" required placeholder="日商簿記2級"></label>
+ <label>試験日<input type="date" name="date" required></label><label>満点<input type="number" name="max" min="1" value="100" required></label>
+ <label>合格点（合格ライン）<input type="number" name="pass" min="0" value="70" required></label><label>目標点<input type="number" name="target" min="0" value="80" required></label>
+ <label class="full">いまの自分から目標点までの学習時間（目安）<input type="number" name="H" min="1" value="250" required><span class="hint">資格とレベルを選ぶと自動で入ります。自分の感覚で直してもOK。点数を2回以上記録すると、あなたの実績ペースに切り替わります。</span></label>
+ <label>週に勉強できる日数<input type="number" name="days" min="1" max="7" value="6" required></label><label>1日に使える最大時間<input type="number" name="cap" min="0.25" max="16" step="0.25" value="2" required></label>
+ <label class="full">今の点数（模試・過去問、わかれば）<input type="number" name="s0" min="0" placeholder="未受験なら空欄"></label>
+ <div class="full plan" id="plan"></div>
+ <div class="acts full"><button type="button" class="ghost" id="dlgX">キャンセル</button><button class="pri">保存</button></div></form></dialog>
+<div id="focus" aria-modal="true" role="dialog" aria-label="集中モード"><button class="fx" id="fClose">閉じる</button>
+ <select id="fEx" aria-label="試験"></select>
+ <div class="modes" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button data-m="pomo">集中 25分</button><button data-m="brk">休憩 5分</button><button data-m="free">ストップウォッチ</button></div>
+ <div class="ring" id="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#22252c" stroke-width="3"/><circle id="arc" cx="50" cy="50" r="46" fill="none" stroke="#ff6166" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg><div class="num" id="fTime">25:00</div></div>
+ <div class="fmsg" id="fMsg"></div>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="pri" id="fGo" style="min-width:140px">開始</button><button id="fEnd">終了して記録</button></div>
+ <div class="fsub" id="fSub"></div></div>
+<div id="toastBox"></div>
+<script>
+{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+const today=()=>ymd(new Date());
+const wk=s=>'日月火水木金土'[parse(s).getDay()];
+const uid=()=>Math.random().toString(36).slice(2,10);
+const h1=x=>x>=10?Math.round(x):Math.round(x*10)/10;
+const sum=a=>a.reduce((x,l)=>x+l.m,0)/60;
+const K=1.3,f=x=>Math.max(0,x)**K,finv=y=>Math.max(0,y)**(1/K);
+const COL=['#d4252f','#2d5b8a','#2f8a5b','#9a6a2d','#6a3d9a','#2a8a8a'];
+const LS='gokaku-note-v1',LT='gokaku-timer-v1';
+
+function sample(){const t=today();let r=7;const rnd=()=>(r=(r*9301+49297)%233280)/233280;
+ const a={id:uid(),name:'基本情報技術者試験',date:addDays(t,88),max:1000,pass:600,target:700,H:200,days:6,cap:2.5,color:0,scores:[{d:addDays(t,-42),s:320},{d:addDays(t,-12),s:400}]};
+ a.subs='科目A テクノロジ|科目A マネジメント・ストラテジ|科目B アルゴリズム|科目B セキュリティ'.split('|').map((n,i)=>({id:uid(),n,l:[1,2,0,0][i]}));
+ const b={id:uid(),name:'TOEIC L&R',date:addDays(t,46),max:990,pass:700,target:800,H:300,days:5,cap:1.5,color:1,scores:[{d:addDays(t,-20),s:640}],subs:'単語|リスニング|Part5 文法|Part7 長文'.split('|').map((n,i)=>({id:uid(),n,l:[1,0,2,1][i]}))};
+ const logs=[];for(let i=55;i>=0;i--){const d=addDays(t,-i);if(rnd()<.74)logs.push({id:uid(),eid:a.id,d,m:30+Math.round(rnd()*4)*30,note:['過去問 午前','アルゴリズム','セキュリティ','科目B 演習'][Math.floor(rnd()*4)]});if(i<30&&rnd()<.55)logs.push({id:uid(),eid:b.id,d,m:30+Math.round(rnd()*2)*15,note:['Part5 文法','リスニング','Part7 長文'][Math.floor(rnd()*3)]})}
+ return {exams:[a,b],logs,sel:a.id,sample:true,at:0,life:mkLife('office')}}
+
+
+/* ---- sound ---- */
+let AC=null,muted=false;try{muted=localStorage.getItem('gokaku-mute')==='1'}catch(e){}
+const ac=()=>{if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC};
+function tone(fr,st,du,ty,vo,sl){const a=ac();if(!a||muted)return;const t=a.currentTime+st,o=a.createOscillator(),g=a.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(fr,t);if(sl)o.frequency.exponentialRampToValueAtTime(sl,t+du);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vo||.15,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+du);o.connect(g).connect(a.destination);o.start(t);o.stop(t+du+.05)}
+function noise(st,du,vo){const a=ac();if(!a||muted)return;const n=Math.floor(a.sampleRate*du),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n)**2;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();fl.type='lowpass';fl.frequency.value=800;g.gain.value=vo;s.buffer=b;s.connect(fl).connect(g).connect(a.destination);s.start(a.currentTime+st)}
+const SE={click:()=>tone(760,0,.05,'triangle',.06),
+ coin:()=>{tone(988,0,.09,'square',.07);tone(1319,.08,.35,'square',.07)},
+ stamp:()=>{tone(160,0,.22,'sine',.5,50);noise(0,.15,.6)},
+ clear:()=>{[523,659,784].forEach((f,i)=>tone(f,i*.1,.25,'triangle',.16));[523,659,784,1047].forEach(f=>tone(f,.32,1.2,'triangle',.08));tone(2093,.34,1,'sine',.04)},
+ level:()=>{[392,523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.07,.2,'square',.05));[784,988,1175,1568].forEach(f=>tone(f,.46,1.1,'triangle',.07))},
+ badge:()=>{tone(1175,0,.12,'triangle',.12);tone(1568,.1,.5,'triangle',.12);tone(2349,.2,.7,'sine',.05)},
+ start:()=>{tone(392,0,.16,'triangle',.14,784);tone(784,.14,.25,'sine',.08)},
+ pause:()=>tone(660,0,.16,'triangle',.12,330),
+ tick:()=>tone(1400,0,.04,'square',.04),
+ bell:()=>[0,.28,.56].forEach(s=>{tone(1047,s,.6,'sine',.18);tone(2094,s,.4,'sine',.05)})};
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- confetti / floating text / celebration ---- */
+const cv=document.createElement('canvas');cv.id='fxc';document.body.appendChild(cv);const cx=cv.getContext('2d');let parts=[],raf=0;
+function confetti(n,x,y){if(calm)return;const d=devicePixelRatio||1;cv.width=innerWidth*d;cv.height=innerHeight*d;cx.setTransform(d,0,0,d,0,0);x=x??innerWidth/2;y=y??innerHeight*.4;const cs=['#d4252f','#2d5b8a','#f0a030','#2f8a5b','#ff8fa3','#6a3d9a'];
+ for(let i=0;i<(n||150);i++){const a=Math.random()*Math.PI*2,v=3+Math.random()*10;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-7,w:5+Math.random()*6,h:8+Math.random()*8,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cs[i%cs.length],life:0})}
+ if(!raf)raf=requestAnimationFrame(step)}
+function step(){cx.clearRect(0,0,innerWidth,innerHeight);parts=parts.filter(p=>p.y<innerHeight+40&&p.life<300);
+ for(const p of parts){p.life++;p.vx*=.985;p.vy=p.vy*.985+.26;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.scale(1,Math.cos(p.life*.18));cx.fillStyle=p.c;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore()}
+ raf=parts.length?requestAnimationFrame(step):0;if(!raf)cx.clearRect(0,0,innerWidth,innerHeight)}
+let pt={x:innerWidth/2,y:innerHeight/2};addEventListener('pointerdown',e=>{pt={x:e.clientX,y:e.clientY}},true);
+function floatTxt(t,x,y){const d=document.createElement('div');d.className='xpf';d.textContent=t;d.style.left=(x??pt.x)+'px';d.style.top=((y??pt.y)-24)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1500)}
+const cq=[];let cOn=false;
+function celebrate(mark,title,sub,snd){cq.push([mark,title,sub,snd]);if(!cOn)nextC()}
+function nextC(){const c=cq.shift();if(!c){cOn=false;return}cOn=true;const w=document.createElement('div');w.className='cele';buzz([30,40,60]);w.innerHTML=`<div class="rays"></div><div><div class="r2">${esc(c[0])}</div><h3>${esc(c[1])}</h3><p>${esc(c[2])}</p></div>`;document.body.appendChild(w);
+ (SE[c[3]]||SE.clear)();setTimeout(SE.stamp,560);setTimeout(()=>confetti(170),560);let done=false;const close=()=>{if(done)return;done=true;w.remove();setTimeout(nextC,180)};w.onclick=close;setTimeout(close,3000)}
+const CHEER=['積み上げた分だけ、試験日の自分が楽になる','今日の1分は、本番の1点','いい流れ。この調子','昨日の自分をひとつ超えた','コツコツが最強','未来の自分が感謝してる','その1回が合格を近づけた'];
+const cheer=()=>CHEER[Math.floor(Math.random()*CHEER.length)];
+function countUp(root){if(calm||!root)return;root.querySelectorAll('.num').forEach(el=>{const m=el.textContent.match(/^(\d+(?:\.\d+)?)(.*)$/);if(!m)return;const to=parseFloat(m[1]),dec=(m[1].split('.')[1]||'').length,suf=m[2],t0=performance.now();const fr=now=>{const k=Math.min(1,(now-t0)/800),e=1-(1-k)**3;el.textContent=(to*e).toFixed(dec)+suf;if(k<1)requestAnimationFrame(fr)};requestAnimationFrame(fr)})}
+
+/* ---- XP / level / streak / badges ---- */
+const xpOf=()=>state.logs.reduce((x,l)=>x+l.m+(l.p?25:0)+(l.b?Math.round(l.m/2):0),0)+(state.bx||[]).reduce((x,b)=>x+b.xp,0);
+const needXP=n=>60+30*(n-1);
+function lvOf(xp){let n=1;while(xp>=needXP(n)){xp-=needXP(n);n++}return {n,cur:xp,need:needXP(n)}}
+const TITLES=[[40,'伝説の受験生'],[30,'合格請負人'],[22,'天才肌'],[15,'秀才'],[10,'猛勉強家'],[6,'努力家'],[3,'受験生'],[1,'見習い']];
+const ttl=n=>TITLES.find(([k])=>n>=k)[1];
+function streak(){const all={};state.logs.forEach(l=>all[l.d]=1);const t=today();let s=0,g=0,d=all[t]||isRest(t)?t:addDays(t,-1);while(g++<800){if(all[d])s++;else if(!isRest(d))break;d=addDays(d,-1)}return s}
+const BD=[['first','始','はじめの一歩',s=>s.n>=1],['pomo1','集','集中25分 完走',s=>s.pomo>=1],['pomo10','鬼','集中25分×10',s=>s.pomo>=10],['goal','済','ノルマ達成',s=>s.goal],['up','伸','点数アップ',s=>s.up],
+ ['st3','3日','3日連続',s=>s.st>=3],['st7','7日','1週間連続',s=>s.st>=7],['st14','14日','2週間連続',s=>s.st>=14],['st30','30日','30日連続',s=>s.st>=30],
+ ['h10','10h','累計10時間',s=>s.h>=10],['h50','50h','累計50時間',s=>s.h>=50],['h100','100h','累計100時間',s=>s.h>=100],['h300','300h','累計300時間',s=>s.h>=300]];
+function earned(){const s={n:state.logs.length,pomo:state.logs.filter(l=>l.p).length,st:streak(),h:sum(state.logs),goal:!!state.goal,
+ up:state.exams.some(e=>{const sc=[...e.scores].sort((a,b)=>a.d<b.d?-1:1);return sc.some((x,i)=>i&&x.s>sc[i-1].s)})};return BD.filter(b=>b[3](s)).map(b=>b[0])}
+function checkBadges(){const now=earned(),nw=now.filter(id=>!(state.badges||[]).includes(id));state.badges=[...new Set([...(state.badges||[]),...now])];return nw}
+const cheerBadges=nw=>nw.forEach(id=>{const B=BD.find(x=>x[0]===id);celebrate(B[1],'バッジ獲得！',B[2],'badge')});
+let fresh=[];
+function renderMe(){const L=lvOf(xpOf()),st=streak();$('#lvN').textContent='Lv.'+L.n;$('#lvT').textContent=ttl(L.n);$('#xpI').style.width=(L.cur/L.need*100)+'%';$('#xpR').textContent='次まで'+(L.need-L.cur)+'XP';
+ $('#stN').textContent=st?st+'日連続':'今日から連続記録';$('#fire').classList.toggle('off',!st);$('#fire').dataset.t=st>=30?4:st>=14?3:st>=7?2:st>=3?1:0;
+ $('#badges').innerHTML=BD.map(b=>`<div class="bd ${(state.badges||[]).includes(b[0])?'on':''} ${fresh.includes(b[0])?'new':''}"><i>${b[1]}</i>${b[2]}</div>`).join('');fresh=[]}
+
+
+/* ---- 生活リズム・スキマ時間・自動スケジュール ---- */
+const WD=[1,2,3,4,5],WE=[0,6],ALL=[0,1,2,3,4,5,6];
+const LIFE={office:['会社員（定時・朝型）',[['朝活','06:30',30,WD],['通勤（行き）','08:00',30,WD],['昼休み','12:20',20,WD],['通勤（帰り）','18:00',30,WD],['夜','21:00',60,WD],['休日 午前','10:00',120,WE],['休日 夜','20:00',60,WE]],[0]],
+ overtime:['会社員（残業多め）',[['通勤（行き）','08:00',30,WD],['昼休み','12:20',15,WD],['通勤（帰り）','20:30',30,WD],['寝る前','23:00',20,WD],['休日 午前','10:00',150,WE],['休日 午後','15:00',60,WE]],[0]],
+ high:['高校生',[['通学（行き）','07:20',20,WD],['休み時間','12:40',15,WD],['放課後・部活後','18:30',30,WD],['夜','20:30',90,WD],['休日 午前','09:30',150,WE],['休日 夜','20:00',90,WE]],[]],
+ univ:['大学生',[['通学（行き）','08:30',30,WD],['空きコマ','13:00',60,[2,4]],['通学（帰り）','17:00',30,WD],['夜','21:00',60,ALL],['休日 午前','10:00',120,WE]],[0]],
+ ronin:['受験・資格に専念',[['朝','08:00',120,ALL],['午前','10:30',90,ALL],['午後','13:30',120,ALL],['夕方','16:00',90,ALL],['夜','20:00',90,ALL]],[0]],
+ parent:['子育て・家事が中心',[['早朝','05:30',30,ALL],['家事のスキマ','10:00',30,WD],['昼寝の間','13:00',45,ALL],['寝かしつけ後','21:30',45,ALL]],[]],
+ remote:['在宅・フリーランス',[['始業前','08:00',60,WD],['昼休み','13:00',30,WD],['夕方','17:30',45,WD],['夜','21:00',60,WD],['休日','10:00',120,WE]],[0]],
+ shift:['シフト・夜勤',[['出勤前','15:00',45,ALL],['休憩中','20:00',20,ALL],['帰宅後','09:00',30,ALL]],[3]]};
+const mkLife=k=>({type:k,slots:LIFE[k][1].map(([label,t,m,dw])=>({id:uid(),label,t,m,dw:[...dw]})),rest:[...LIFE[k][2]]});
+const dwOf=s=>Array.isArray(s.dw)?s.dw:s.on==='wd'?WD:s.on==='we'?WE:ALL;
+const ON={wd:'平日',we:'土日',all:'毎日'};
+const isRest=d=>!!state.life&&state.life.rest.includes(parse(d).getDay());
+const isWE=d=>{const w=parse(d).getDay();return w===0||w===6};
+const slotsOn=d=>!state.life||isRest(d)?[]:state.life.slots.filter(s=>dwOf(s).includes(parse(d).getDay())).sort((a,b)=>a.t<b.t?-1:1);
+const capDay=d=>slotsOn(d).reduce((x,s)=>x+s.m,0);
+function capWeek(){let m=0;for(let i=0;i<7;i++)m+=capDay(addDays(today(),i));return m}
+function capUntil(date){let m=0,d=today(),g=0;while(d<date&&g++<800){m+=capDay(d);d=addDays(d,1)}return m}
+const PH=[['基礎期','まずはテキストを一周して全体像をつかむ時期。わからなくて当たり前です。',['用語・単語の暗記','テキスト1単元＋確認問題','テキスト＋演習','テキストをまとめて進める']],
+ ['演習期','インプットした知識を、問題を解いて使える知識に変える時期。間違えるほど伸びます。',['一問一答','過去問・問題演習','過去問＋解説の読み込み','過去問 通しで1回分']],
+ ['直前期','新しいことより、できる問題を確実にする時期。弱点の総ざらいと本番形式の練習を。',['弱点の暗記 総ざらい','過去問（時間を計って）','間違えた問題の解き直し','模試・本番形式']]];
+const task=(m,we,ph)=>PH[ph||0][2][m<=20?0:m<=45?1:we&&m>=120?3:2];
+function pickSub(e,d,i){const S=(e.subs||[]);if(!S.length)return '';const bag=[];S.forEach(x=>{for(let k=0;k<3-x.l;k++)bag.push(x.n)});const n=Math.floor(parse(d)/864e5)*5+i;return bag[n%bag.length]}
+function quotas(){const sdw=Math.max(1,7-(state.life?state.life.rest.length:0));
+ return state.exams.map(e=>{const c=calc(e);return {e,c,q:c.left>0&&c.remain>0&&c.perDay!==Infinity?c.perDay*e.days/sdw*60:0}})}
+function dayPlan(d,Q){Q=Q||quotas();if(!state.life)return null;if(isRest(d))return {rest:true,items:[],need:0,cap:0};
+ const act=Q.filter(x=>d<x.e.date&&x.c.left>0).map(x=>({...x,r:x.q}));const need=act.reduce((a,x)=>a+x.q,0);const we=isWE(d);
+ const items=slotsOn(d).map((s,i)=>{let p=act.filter(x=>x.r>0).sort((a,b)=>b.r/b.q-a.r/a.q||b.r-a.r)[0],bonus=false;
+  if(!p){bonus=true;p=act.slice().sort((a,b)=>a.e.date<b.e.date?-1:1)[0]}if(p)p.r-=s.m;
+  const sb=p?pickSub(p.e,d,i):'';return {sid:s.id,t:s.t,m:s.m,label:s.label,eid:p?p.e.id:null,bonus:bonus&&!!p,task:task(s.m,we,p?p.c.phase:0)+(sb?'：'+sb:'')}});
+ return {rest:false,items,need,cap:capDay(d)}}
+const toMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const nowMin=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()+n.getSeconds()/60};
+const doneOf=d=>(state.done&&state.done[d])||[];
+const REST_MSG=['今日は息抜きデー。休むことも、覚えたことを定着させる大事な時間です。','しっかり休んだ人ほど、本番で粘れる。今日は自分を甘やかしてOK。','散歩・早寝・好きなごはん。明日の集中力の貯金をしよう。'];
+
+let state;try{state=JSON.parse(localStorage.getItem(LS))}catch(e){}
+if(!state||!Array.isArray(state.exams))state=sample();
+let tab='dash',dbRef=null,pushT=null;
+
+function save(){autoBackup();state.at=Date.now();try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}
+ if(dbRef&&!state.sample){clearTimeout(pushT);pushT=setTimeout(()=>{dbRef.set({json:JSON.stringify(state),at:state.at}).then(()=>{lastSync=Date.now();$('#sync').textContent='アカウントに同期済み';renderBk()}).catch(()=>$('#sync').textContent='同期できませんでした（この端末には保存済み）')},700)}}
+const ex=id=>state.exams.find(e=>e.id===id);
+function cur(){let e=ex(state.sel);if(!e&&state.exams.length){e=state.exams.slice().sort((a,b)=>a.date<b.date?-1:1)[0];state.sel=e.id}return e}
+
+function calc(e){const t=today(),left=diff(t,e.date),sdays=Math.max(0,left)*e.days/7;
+ const sc=[...e.scores].sort((a,b)=>a.d<b.d?-1:1),last=sc[sc.length-1],s=last?last.s:0,sd=last?last.d:(e.created||t);
+ const L=state.logs.filter(l=>l.eid===e.id),hrs=(a,b)=>sum(L.filter(l=>l.d>=a&&l.d<b));
+ const doneSince=sum(L.filter(l=>l.d>=sd)),total=sum(L);
+ let pace=null;if(sc.length>=2){const p=sc[sc.length-2],h=hrs(p.d,last.d),ds=last.s-p.s;if(h>=1&&ds>0)pace=ds/h}
+ const tN=Math.min(1,e.target/e.max),sN=Math.min(1,s/e.max);
+ const bN=Math.min(1,(e.base||0)/e.max),den=f(tN)-f(bN)>0.02?f(tN)-f(bN):f(tN);
+ const need=s>=e.target?0:pace?(e.target-s)/pace:e.H*(f(tN)-f(sN))/den;
+ const remain=Math.max(0,need-doneSince),perDay=sdays>0?remain/sdays:(remain>0?Infinity:0);
+ const fut=e.cap*sdays+doneSince;
+ let proj=pace?s+pace*fut:e.max*finv(f(sN)+fut*den/e.H);proj=Math.max(s,Math.min(e.max,Math.round(proj)));
+ const todayDone=sum(L.filter(l=>l.d===t)),ws=addDays(t,-((parse(t).getDay()+6)%7)),weekDone=hrs(ws,addDays(ws,7));
+ let v;if(left<0)v=['試験日を<br>過ぎました','mut'];else if(remain<=0)v=['目標点<br>到達圏','ok'];else if(perDay<=e.cap*.85)v=['余裕あり','ok'];else if(perDay<=e.cap)v=['計画通り<br>なら届く','ok'];else if(perDay<=e.cap*1.25)v=['要<br>追い込み','warn'];else v=['このまま<br>では届かない','bad'];
+ const prog=total+remain>0?total/(total+remain):1,phase=left<=14?2:prog<.4?0:1;
+ return {t,left,sdays,s,sd,pace,need,remain,perDay,proj,total,doneSince,todayDone,weekDone,weekGoal:perDay*e.days,v,L,sc,phase,prog}}
+
+
+function firstTime(){try{return localStorage.getItem('gokaku-seen')!=='1'}catch(e){return false}}
+function reas(c,e){const k=c.v[1];
+ if(c.left<0)return 'おつかれさまでした。結果がどうであれ、積み上げた時間はなくなりません。次の試験を登録すれば、また逆算から始められます。';
+ if(c.remain<=0)return '<b>目標に届く計算です。</b>ここからは弱点をつぶしながら、ペースを保てば十分。休む日もしっかり取りましょう。';
+ if(k==='ok')return '<b>今のペースで大丈夫。</b>この数字は毎日引き直されるので、1日休んでも残りの日に少しずつ配り直されるだけです。';
+ if(k==='warn')return '<b>少しだけ足りない計算です。</b>スキマ枠を1つ足すか、休日に30分足せば届きます。<br><button data-go="sch">スキマ時間を見直す</button>';
+ return '<b>今の設定だと足りない計算ですが、焦らなくて大丈夫。</b>「1日に使える時間」「目標点」「試験日」のどれかを見直せば、現実的な計画になります。数字はあなたを責めるためではなく、作戦を立てるためのものです。<br><button data-go="sch">スキマ時間を見直す</button> <button data-ed="'+esc(e.id)+'">試験の設定を見直す</button>'}
+function renderToday(c){const t=today(),box=$('#today');
+ if(!state.life){box.innerHTML=`<div class="tcard"><h2>今日やること</h2><p class="why">生活リズム（通勤・昼休み・夜など）を選ぶと、スキマ時間に合わせて今日の予定を自動で組みます。</p><button class="pri" data-go="sch" style="margin-top:8px">生活リズムを設定する</button></div>`;return}
+ const P=dayPlan(t),dn=doneOf(t);
+ if(P.rest){box.innerHTML=`<div class="tcard"><h2>今日は息抜きデー</h2><div class="calm">${REST_MSG[parse(t).getDate()%REST_MSG.length]}<br><b>連続記録は途切れません。</b>やりたくなったら「集中する」から少しだけやってもOK。</div></div>`;return}
+ const nm=nowMin();let missed=0;
+ const rows=P.items.map(it=>{const e=ex(it.eid),st=toMin(it.t),done=dn.includes(it.sid),now=!done&&nm>=st&&nm<st+it.m,miss=!done&&nm>=st+it.m;if(miss)missed+=it.m;
+  return `<div class="slot ${done?'done':''} ${now?'now':''} ${miss?'miss':''}"><div class="tm">${it.t}<small>${it.m}分</small></div><div class="bd2"><b>${esc(it.label)}</b>${it.bonus?'<span class="bn">ボーナス XP×1.5</span>':''}${now?' <span class="nowtag">いまスキマ時間！</span>':''}<small>${e?`<span class="dot" style="background:${COL[e.color%COL.length]}"></span>${esc(e.name)}・`:''}${it.task}</small></div>${done?'<span class="ok">済</span>':e?`<button class="pri" data-do="${esc(it.sid)}">やった！</button>`:''}</div>`}).join('');
+ const all=P.items.length,dc=P.items.filter(i=>dn.includes(i.sid)).length;
+ const tip=missed&&dc<all?`<p class="why" style="margin-top:8px">過ぎたスキマ ${missed}分は、まだ「やった！」を押せます。できなかった分は明日以降に自動で配り直すので、気にしすぎなくて大丈夫。</p>`:'';
+ const over=over6()?'<div class="calm" style="margin-top:10px">6日連続でノルマ達成中。すごい。<b>そろそろ息抜きもアリ</b>です。休むのも合格戦略のひとつ。</div>':'';
+ box.innerHTML=`<div class="urg" id="urg"></div><div class="tcard">${review()}<h2>今日やること <small>${dc}/${all} 枠 完了・スキマ合計 ${P.cap}分</small></h2>${rows||'<p class="why">今日はスキマ時間がありません。「予定」から追加できます。</p>'}${tip}${over}</div>`}
+function over6(){for(let i=1;i<=6;i++){const d=addDays(today(),-i);if(!state.logs.some(l=>l.d===d))return false}return !(state.life&&state.life.rest.length)}
+function renderSch(){const L=state.life,Q=quotas();
+ $('#ltype').innerHTML=Object.entries(LIFE).map(([k,v])=>`<button data-life="${k}" aria-pressed="${!!L&&L.type===k}">${v[0]}</button>`).join('')+`<button data-life="custom" aria-pressed="${!!L&&L.type==='custom'}">自分で作る</button>`;if(!L)$('#gen').open=true;if(L&&L.gen){const F=$('#genF').elements;for(const k in L.gen)if(F[k]&&!F[k].matches(':focus'))F[k].value=L.gen[k];}
+ $('#slotT').innerHTML=L?L.slots.map(s=>`<tr data-sid="${esc(s.id)}"><td><input data-f="label" value="${esc(s.label)}" aria-label="名前"></td><td><input type="time" data-f="t" value="${esc(s.t)}" aria-label="開始"></td><td><input type="number" data-f="m" min="5" max="600" step="5" value="${esc(s.m)}" aria-label="分"></td><td><div class="sdw">${[1,2,3,4,5,6,0].map(w=>`<button data-sd="${esc(s.id)}|${w}" aria-pressed="${dwOf(s).includes(w)}" aria-label="${'日月火水木金土'[w]}曜">${'日月火水木金土'[w]}</button>`).join('')}</div></td><td><button data-rs="${esc(s.id)}">削除</button></td></tr>`).join(''):'<tr><td colspan="5" class="why">上のタイプを選ぶとスキマ時間のひな形が入ります。</td></tr>';
+ $('#dows').innerHTML=[1,2,3,4,5,6,0].map(w=>`<button data-dow="${w}" aria-pressed="${!!L&&L.rest.includes(w)}">${'日月火水木金土'[w]}</button>`).join('');
+ if(!L){$('#feas').innerHTML=`<div class="guide"><h2>あなたの生活に合わせて、毎日の予定を自動で作ります</h2><p class="why">近いタイプを選ぶだけで、通勤・昼休み・夜などのスキマ時間から「あなたが勉強できるはずの時間」を出します。</p></div>`;$('#week').innerHTML='';return}
+ const cw=capWeek()/60,act=Q.filter(x=>x.q>0),nw=act.reduce((a,x)=>a+x.c.perDay*x.e.days,0),ratio=cw>0?nw/cw:9;
+ let msg;if(!act.length)msg='<b>いま急ぎの試験はありません。</b>スキマ時間は復習や先取りに使えます。';
+ else if(ratio<=.6)msg=`<b>スキマの${Math.round(ratio*100)}%を使えば足りる計算。</b>余った時間は休んでOK。息抜きも立派な合格戦略です。`;
+ else if(ratio<=.9)msg=`<b>スキマ時間をコツコツ使えば届きます。</b>1日できない日があっても、取り返せる範囲です。`;
+ else if(ratio<=1)msg=`<b>ほぼ全部のスキマを使う計画です。</b>ここが勝負どころ。でも疲れた日は「5分だけ」でも十分な前進です。`;
+ else msg=`<b>全部の試験を合わせると、いまのスキマでは週 ${h1(nw-cw)}時間 足りません。</b>でも大丈夫、解決策はあります：朝活を15分足す・休日に1枠足す・試験の目標や日程を見直す。どれか1つで変わります。`;
+ const per=act.map(x=>{const cu=capUntil(x.e.date)/60,r=cu>0?x.c.remain/cu:9;return `<div><div class="lbl"><span><span class="dot" style="background:${COL[x.e.color%COL.length]}"></span>${esc(x.e.name)}　この試験だけなら、試験日までのスキマ ${h1(cu)}h のうち</span><b>${Math.round(Math.min(r,9.99)*100)}% 使う</b></div><div class="bar"><i style="width:${Math.min(100,r*100)}%;background:${r>1?'var(--red)':'var(--ink)'}"></i></div></div>`}).join('');
+ $('#feas').innerHTML=`<div class="feas"><div><p class="lead">あなたの生活なら、1週間に</p><div><span class="num">${h1(cw)}</span><small> 時間</small></div><p class="lead">勉強できるはずです（必要なのは週 <b>${h1(nw)}時間</b>）</p></div><div class="cmp"><div class="calm">${msg}</div>${per}</div></div>`;
+ let w='';for(let i=0;i<7;i++){const d=addDays(today(),i),P=dayPlan(d,Q),dn=doneOf(d);
+  w+=`<div class="day ${i===0?'td':''} ${P.rest?'rest':''}"><h3>${i===0?'今日':d.slice(5).replace('-','/')}<small>${wk(d)}${P.rest?'':'・'+P.cap+'分'}</small></h3>${P.rest?'<p class="why">息抜きデー<br>しっかり休もう</p>':P.items.map(it=>{const e=ex(it.eid);return `<div class="blk ${it.bonus?'bon':''}" style="--c:${e?COL[e.color%COL.length]:'var(--line)'}"><b>${it.t}</b> ${esc(it.label)}${dn.includes(it.sid)?' <b style="color:var(--red)">済</b>':''}<br>${e?esc(e.name)+'・':''}${it.task}${it.bonus?'（余力）':''}</div>`}).join('')||'<p class="why">スキマなし</p>'}</div>`}
+ $('#week').innerHTML=w}
+function renderHelp(){$('#helpw').innerHTML=`<div class="banner"><span>どんな画面になるか見てみたいときは、サンプルを表示できます。自分のデータは消えません。</span>${state.sample?'':'<button data-sample>サンプルを見る</button>'}</div><h2 style="margin-top:0">このアプリの考え方</h2>
+<div class="calm">数字は<b>あなたを責めるためではなく、作戦を立てるため</b>のものです。どれも「目安」で、記録するたびに自動で引き直されます。</div>
+<h2>数字の意味</h2><ul>
+<li><b>1日あたり◯時間</b>：残り必要時間を、試験日までの勉強できる日数で割ったもの。1日休むと、残りの日に少しずつ上乗せされるだけです。</li>
+<li><b>判定のハンコ</b>：1日に使える時間と比べた「今の見込み」。「届かない」と出ても、設定を見直せば現実的な計画に直せます。</li>
+<li><b>予測点</b>：1日の上限時間を毎回やり切った場合の見込み。点数を2回以上記録すると、あなた自身の伸び方で計算します。</li>
+<li><b>学習時間の目安</b>：資格とレベルから入る時間は、一般によく言われる大まかな値です。公式の数字ではないので、合わなければ直してください。</li></ul>
+<h2>スケジュールと息抜き</h2><ul>
+<li>生活リズムは、8種類のひな形から選ぶか、「質問に答えて作る」で自分専用に作れます。スキマ時間ごとに使う曜日も1日単位で選べます（例：空きコマは火・木だけ）。</li><li>生活リズムのスキマ時間に、試験日が近く遅れている試験から順に割り当てます。</li>
+<li>試験までの日数と進み具合から、<b>基礎期→演習期→直前期</b>を自動で判断し、やる内容を変えます。</li><li>科目に「苦手」を付けると、その科目が予定に多く入ります。</li><li>「スマホのカレンダーに入れる」で2週間分の予定を書き出せます。予定の5分前に通知が出ます。</li><li>ノルマを超えたスキマは「余力」枠。やればXPが1.5倍、休んでも問題ありません。</li>
+<li><b>息抜きデーは連続記録が途切れません。</b>休むのも計画のうちです。</li></ul>
+<h2>XP・バッジ・音</h2><ul><li><b>ボス戦</b>：試験は「ボス」。HPは目標点までの残り時間で、勉強するほど削れます。</li><li><b>毎日のミッション</b>：3つクリアで宝箱。中からレア度つきのハンコが出ます（コンプリートを目指そう）。</li><li><b>コンボ</b>：同じ日にスキマ枠を続けてこなすとコンボボーナス。</li><li>1日1回のログインボーナス（+10XP）、連続日数に応じて炎が大きくなります。</li><li>1分=1XP。集中25分を完走すると+25XPのボーナス。</li><li>演出や音は気分を上げるためのもの。音は上の「音あり／音なし」で切り替えられます。</li></ul>
+<h2>データについて</h2><ul><li>${HOSTED?'記録はこの端末のブラウザの中だけに保存されます（サーバーには送られません）。':'記録はあなたのアカウントに保存され（あなた以外には見えません）、この端末にも控えが残ります。'}</li><li>削除しても数秒間は「元に戻す」が出ます。</li></ul>
+<div class="calm">うまくいかない日があって当然です。<b>0分の日より、5分の日。</b>それだけで計画は前に進みます。</div>`}
+const fmtHMS=ms=>{const s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/3600)+'時間'+pad(Math.floor(s/60)%60)+'分'+pad(s%60)+'秒'};
+function live(){const n=new Date(),mid=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);const e=cur();
+ const ec=$('#eclock');if(ec&&e){const ms=parse(e.date)-n;ec.textContent=ms>0?'試験日まで '+Math.floor(ms/864e5)+'日 '+fmtHMS(ms%864e5):''}
+ const u=$('#urg');if(!u||!state.life||!e)return;const t=today(),P=dayPlan(t);if(P.rest){u.innerHTML='';return}
+ const goal=Math.round(P.need),done=Math.round(sum(state.logs.filter(l=>l.d===t))*60),left=Math.max(0,goal-done),nm=nowMin();
+ const nx=P.items.find(it=>!doneOf(t).includes(it.sid)&&toMin(it.t)+it.m>nm);let nxt='';
+ if(nx){const st=toMin(nx.t);nxt=st>nm?`<span>次のスキマ「${esc(nx.label)}」まで <b>${fmtHMS((st-nm)*60000).replace(/^0時間/,'')}</b></span>`:`<span>いま「${esc(nx.label)}」の時間！</span>`}
+ u.className='urg'+(left>0&&n.getHours()>=20?' hot':'');
+ u.innerHTML=left>0?`<span>今日のノルマ残り <b>${left}分</b></span><span>今日が終わるまで <b>${fmtHMS(mid-n)}</b></span>${nxt}`:`<span><b style="color:var(--red)">今日のノルマ達成！</b>　ここからは余力。休んでも大丈夫です。</span>${nxt}`}
+setInterval(live,1000);
+
+/* ---- 週のふりかえり ---- */
+function review(){const t=today(),ws=addDays(t,-((parse(t).getDay()+6)%7)),ps=addDays(ws,-7),pp=addDays(ws,-14);
+ const inR=(a,b)=>state.logs.filter(l=>l.d>=a&&l.d<b),lw=inR(ps,ws),pw=inR(pp,ps);if(!lw.length)return '';
+ const h=sum(lw),hp=sum(pw),days=new Set(lw.map(l=>l.d)).size,by={};lw.forEach(l=>by[l.d]=(by[l.d]||0)+l.m);const best=Object.entries(by).sort((a,b)=>b[1]-a[1])[0];
+ const diffH=h-hp,msg=diffH>0.2?`先々週より <b>${h1(diffH)}時間</b> 多く勉強できました。確実に伸びています。`:diffH<-0.2?'先々週より少なめ。忙しい週もあります。今週は「スキマ1つ」から取り戻しましょう。':'先々週と同じペースをキープ。安定しているのは強みです。';
+ return `<details class="rev" ${parse(t).getDay()===1?'open':''}><summary>先週のふりかえり（${ps.slice(5).replace('-','/')}〜）</summary><div class="grid"><div><span class="num">${h1(h)}h</span><small class="why">合計</small></div><div><span class="num">${days}日</span><small class="why">勉強した日</small></div><div><span class="num">${best?h1(best[1]/60)+'h':'-'}</span><small class="why">最高 ${best?best[0].slice(5).replace('-','/')+'（'+wk(best[0])+'）':''}</small></div></div><p class="why">${msg}</p></details>`}
+
+/* ---- カレンダー書き出し（.ics） ---- */
+function ics(){const Q=quotas(),L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//gokaku-note//JP','CALSCALE:GREGORIAN'],st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+ const tx=v=>String(v).replace(/[\\,;]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+ for(let i=0;i<14;i++){const d=addDays(today(),i),P=dayPlan(d,Q);if(!P||P.rest)continue;
+  P.items.forEach(it=>{const e=ex(it.eid);if(!e)return;const [h,m]=it.t.split(':').map(Number),a=parse(d);a.setHours(h,m);const b=new Date(a.getTime()+it.m*60000);
+   const f=x=>x.getFullYear()+pad(x.getMonth()+1)+pad(x.getDate())+'T'+pad(x.getHours())+pad(x.getMinutes())+'00';
+   L.push('BEGIN:VEVENT','UID:'+d+'-'+it.sid+'@gokaku-note','DTSTAMP:'+st,'DTSTART:'+f(a),'DTEND:'+f(b),'SUMMARY:'+tx('📖 '+it.label+'｜'+e.name),'DESCRIPTION:'+tx(it.task+'（'+it.m+'分）'),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+tx('スキマ時間です：'+it.task),'TRIGGER:-PT5M','END:VALARM','END:VEVENT')})}
+ L.push('END:VCALENDAR');return L.join('\r\n')}
+
+/* ---- バックアップ・復元 ---- */
+const BK='gokaku-bk-v1';let bkList=[],bkRef=null,lastSync=null,pending=null,armed=null;
+try{bkList=JSON.parse(localStorage.getItem(BK))||[]}catch(e){}
+const enc=o=>'GKN1:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+function dec(txt){txt=String(txt||'').trim();if(!txt)throw 0;let o;if(txt.startsWith('GKN1:'))o=JSON.parse(decodeURIComponent(escape(atob(txt.slice(5).replace(/\s/g,'')))));else o=JSON.parse(txt);if(!o||!Array.isArray(o.exams)||!Array.isArray(o.logs))throw 0;return o}
+const pure=()=>{const o=JSON.parse(JSON.stringify(state));delete o.sample;return o};
+function autoBackup(){if(state.sample||!state.exams.length)return;const t=today();if(bkList[0]&&bkList[0].d===t)return;
+ bkList.unshift({d:t,at:Date.now(),json:JSON.stringify(pure())});bkList=bkList.slice(0,7);try{localStorage.setItem(BK,JSON.stringify(bkList))}catch(e){}
+ if(bkRef)bkRef.set({json:JSON.stringify(bkList)}).catch(()=>{})}
+function summ(o){const lg=o.logs||[],last=lg.reduce((m,l)=>l.d>m?l.d:m,'');return `試験 ${o.exams.length}件（${o.exams.slice(0,3).map(e=>esc(e.name)).join('・')}${o.exams.length>3?' ほか':''}）・記録 ${lg.length}件・合計 ${h1(sum(lg))}時間${last?'・最後の記録 '+esc(last.replaceAll('-','/')):''}`}
+function restore(o,label){const p=snap();state=o;state.sample=false;if(!Array.isArray(state.badges))state.badges=earned();save();tab='dash';render();toast(label+'から復元しました',p);celebrate('復','復元しました',summ(o).replace(/<[^>]+>/g,''),'badge')}
+function renderBk(){if(!$('#bkStat'))return;
+ $('#bkStat').innerHTML=(HOSTED?'<b>記録はこのスマホ（このブラウザ）の中だけに保存されます。</b>ほかの人には見えません。ブラウザのデータ削除や機種変更で消えるので、ときどき下の「バックアップコード」を控えておきましょう。<br>iPhoneは<b>共有ボタン →「ホーム画面に追加」</b>、Androidは<b>メニュー →「ホーム画面に追加」</b>でアプリのように使えます。iPhoneはホーム画面から使うと、データが消えにくくなります。':bkRef?`<b>自動で保存されています。</b>同じClaudeアカウントでログインすれば、スマホでもパソコンでも同じ記録が出ます${lastSync?'（最終保存 '+new Date(lastSync).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})+'）':''}。このページを共有された人は、それぞれ自分だけの記録になります（ほかの人には見えません）。`:'<b>いまはこの端末にだけ保存されています。</b>Claudeにログインした状態でこのページを開くと、アカウントに自動保存され、スマホでも同じ記録が使えます。念のため下の「バックアップコード」も控えておくと安心です。')+(state.sample?'<br>（サンプル表示中はバックアップしません）':'');
+ $('#bkList').innerHTML=bkList.length?bkList.map((b,i)=>{let o;try{o=JSON.parse(b.json)}catch(e){return ''}return `<div class="bkrow"><span><b>${esc(b.d.replaceAll('-','/'))}（${wk(b.d)}）</b> の朝の状態<br><small class="why">${summ(o)}</small></span><button data-bk="${i}">${armed==='a'+i?'本当に戻す？':'この日に戻す'}</button></div>`}).join(''):'<p class="why">まだありません。記録を始めると1日1回自動で作られます。</p>';
+ $('#bkPrev').innerHTML=pending?`<div class="prev"><b>この内容で復元しますか？</b><br>${summ(pending)}<br><span class="hint">いまの内容は上書きされますが、直後なら「元に戻す」で戻せます。</span><div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="pri" id="bkGo">この内容で復元</button><button class="ghost" id="bkCancel">やめる</button></div></div>`:''}
+$('#bkCopy').onclick=async()=>{if(state.sample){toast('サンプル表示中です。自分の試験を登録してから作れます');return}const c=enc(pure()),o=$('#bkOut');o.hidden=false;o.value=c;
+ try{await navigator.clipboard.writeText(c);SE.coin();toast('コピーしました。メモアプリなどに貼っておけば安心です')}catch(e){o.focus();o.select();toast('下のコードを長押しして全選択→コピーしてください')}};
+$('#bkFile').onclick=async()=>{if(state.sample){toast('サンプル表示中です。自分の試験を登録してから作れます');return}
+ try{const ok=await saveFile('合格逆算ノート_'+today()+'.json',JSON.stringify(pure(),null,1),'application/json');if(ok){SE.coin();toast('ファイルを保存しました')}else{$('#bkOut').hidden=false;$('#bkOut').value=enc(pure());toast('この画面ではファイル保存が使えないため、コードを表示しました')}}catch(e){toast('保存がキャンセルされました')}};
+$('#bkCheck').onclick=()=>{try{pending=dec($('#bkIn').value);SE.click()}catch(e){pending=null;toast('コードを読み取れませんでした。最初から最後まで貼れているか確認してください')}renderBk()};
+$('#bkFileIn').onchange=ev=>{const f=ev.target.files[0];if(!f)return;f.text().then(t=>{try{pending=dec(t)}catch(e){pending=null;toast('このファイルは読み取れませんでした')}renderBk()});ev.target.value=''};
+$('#bkPrev').addEventListener('click',ev=>{if(ev.target.id==='bkGo'&&pending){const o=pending;pending=null;$('#bkIn').value='';restore(o,'バックアップ')}if(ev.target.id==='bkCancel'){pending=null;renderBk()}});
+$('#bkList').addEventListener('click',ev=>{const b=ev.target.closest('[data-bk]');if(!b)return;const i=Number(b.dataset.bk);if(armed!=='a'+i){armed='a'+i;renderBk();setTimeout(()=>{if(armed==='a'+i){armed=null;renderBk()}},4000);return}armed=null;restore(JSON.parse(bkList[i].json),bkList[i].d.replaceAll('-','/')+' の状態')});
+
+let genDw=[...WD];
+function renderGenDw(){$('#genDw').innerHTML=[1,2,3,4,5,6,0].map(w=>`<button type="button" data-gw="${w}" aria-pressed="${genDw.includes(w)}">${'日月火水木金土'[w]}</button>`).join('')}
+$('#genDw').addEventListener('click',ev=>{const b=ev.target.closest('[data-gw]');if(!b)return;const w=Number(b.dataset.gw);genDw=genDw.includes(w)?genDw.filter(x=>x!==w):[...genDw,w];SE.click();renderGenDw()});
+const hm=m=>{m=((Math.round(m/5)*5)%1440+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
+function genSlots(g){const k=g.kind,W=genDw.slice(),O=ALL.filter(x=>!W.includes(x)),out=[],add=(label,t,m,dw)=>{m=Math.floor(m/5)*5;if(m>=10&&dw.length)out.push({id:uid(),label,t:hm(t),m,dw})};
+ const wake=toMin(g.wake),leave=toMin(g.leave),move=+g.move||0,lunch=+g.lunch||0,night=+g.night||0,off=+g.off||0;let home=toMin(g.home),bed=toMin(g.bed);if(bed<=home)bed+=1440;
+ const mv=k==='school'?'通学':'通勤',ln=k==='school'?'休み時間':'昼休み';
+ if(k==='none'){const span=Math.max(0,bed-wake-180);let st=wake+60,left=Math.min(span,480);['午前','昼前','午後','夕方','夜'].forEach(n=>{if(left<30)return;const m=Math.min(90,left);add(n,st,m,W);st+=m+45;left-=m})}
+ else if(k==='home'){add('朝の家事前',wake+15,Math.min(45,Math.max(0,leave-wake-30)),W);add('家事のスキマ',600,30,W);if(lunch)add('お昼',780,lunch,W);add('夜',Math.max(home,1260),Math.min(night,bed-1260-30),W)}
+ else{const free=leave-wake-50;if(free>=15)add('朝活',wake+30,Math.min(free,45),W);
+  if(+g.ms&&move>=15){add(mv+'（行き）',leave,move-5,W);add(mv+'（帰り）',home-move,move-5,W)}
+  if(lunch>=10)add(ln,k==='school'?760:740,lunch,W);
+  const avail=bed-home-120;if(avail>=15)add('夜',home+90,Math.min(night,avail),W)}
+ if(off>0&&O.length){const am=Math.min(off,180);add('休みの日 午前',600,am,O);if(off>am)add('休みの日 夜',1200,off-am,O)}
+ return out}
+$('#genF').addEventListener('submit',ev=>{ev.preventDefault();const F=ev.target.elements,g={};['kind','wake','leave','move','ms','lunch','home','bed','night','off'].forEach(k=>g[k]=F[k].value);
+ const sl=genSlots(g);if(!sl.length){toast('スキマ時間が見つかりませんでした。時間を見直してみてください');return}
+ const p=snap();state.life={type:'custom',slots:sl,rest:state.life?state.life.rest:[],gen:{...g,dw:genDw}};$('#gen').open=false;save();render();SE.stamp();confetti(80);
+ const wk7=capWeek()/60;toast(`スキマ時間を${sl.length}個作りました（週 約${h1(wk7)}時間）`,p)});
+
+const OWN='gokaku-own-v1';
+const ownSaved=()=>{try{return !!localStorage.getItem(OWN)}catch(e){return false}};
+function showSample(){if(!state.sample){try{localStorage.setItem(OWN,JSON.stringify(state))}catch(e){toast('この画面ではサンプルに切り替えられません');return}}undo=null;$('#toastBox').innerHTML='';state=sample();tab='dash';try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render();scrollTo({top:0});SE.click()}
+function backOwn(){let o=null;try{o=JSON.parse(localStorage.getItem(OWN));localStorage.removeItem(OWN)}catch(e){}if(o){undo=null;state=o;save();tab='dash';render();scrollTo({top:0});SE.stamp();toast('自分のデータに戻りました')}}
+
+/* ---- ゲーム要素：ボーナスXP・ミッション・宝箱・コンボ・ボス ---- */
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const addBX=(xp,k)=>{state.bx=state.bx||[];state.bx.push({d:today(),xp,k})};
+const HANKO=[['n1',0,'よくできました'],['n2',0,'がんばったね'],['n3',0,'その調子'],['r1',1,'たいへん<br>よくできました'],['r2',1,'花まる'],['s1',2,'合格祈願'],['s2',2,'金の花まる'],['u1',3,'天才'],['u2',3,'満開の桜']];
+const RAR=[['ノーマル',30],['レア',60],['スーパーレア',120],['ウルトラレア',300]];
+function roll(){const x=Math.random(),r=x<.02?3:x<.12?2:x<.40?1:0,pool=HANKO.filter(h=>h[1]===r);return pool[Math.floor(Math.random()*pool.length)]}
+function quests(){const t=today();if(isRest(t))return [];const T=state.logs.filter(l=>l.d===t),tm=Math.round(sum(T)*60),pd=state.exams.map(calc).filter(c=>c.left>0&&c.perDay!==Infinity).reduce((x,c)=>x+c.perDay,0),td=sum(T);
+ const pool=[['m60','今日合計60分 勉強する',Math.min(1,tm/60),tm+'/60分'],['pomo','集中25分を1回 完走する',T.some(l=>l.p)?1:0,T.filter(l=>l.p).length+'/1回'],
+  ['three','3回に分けて記録する',Math.min(1,T.length/3),T.length+'/3回'],['m30','まずは30分 勉強する',Math.min(1,tm/30),tm+'/30分']];
+ if(pd)pool.push(['goal','今日のノルマを達成する（全試験）',Math.min(1,td/pd),h1(td)+'/'+h1(pd)+'時間']);
+ if(state.life&&slotsOn(t).length>=2)pool.push(['slot2','スキマ時間を2枠こなす',Math.min(1,doneOf(t).length/2),doneOf(t).length+'/2枠']);
+ const seed=Number(t.replaceAll('-',''));return pool.map((q,i)=>[q,(seed%89*(i+3)+i*37)%101]).sort((a,b)=>a[1]-b[1]).slice(0,3).map(x=>x[0])}
+const qst=()=>{const t=today();if(!state.q||state.q.d!==t)state.q={d:t,c:[],open:false};return state.q};
+const CHEST=`<svg viewBox="0 0 96 84" aria-hidden="true"><ellipse cx="48" cy="80" rx="38" ry="4" fill="#0003"/><rect x="10" y="38" width="76" height="40" rx="5" fill="#b5702c"/><rect x="10" y="38" width="76" height="8" fill="#8a5220"/><rect x="22" y="38" width="7" height="40" fill="#f0c040"/><rect x="67" y="38" width="7" height="40" fill="#f0c040"/><g class="lid"><path d="M10 40 Q10 10 48 10 Q86 10 86 40 Z" fill="#c98236"/><path d="M22 40 V18 h7 V40 Z M67 40 V18 h7 V40Z" fill="#f0c040"/><path d="M14 30 Q48 8 82 30" stroke="#e8a85a" stroke-width="3" fill="none"/></g><rect x="40" y="34" width="16" height="16" rx="3" fill="#f0c040" stroke="#8a5220" stroke-width="2"/><circle cx="48" cy="42" r="3" fill="#8a5220"/></svg>`;
+function renderQuest(){const box=$('#quest');if(!box)return;if(state.sample&&false)return;const Q=quests(),q=qst();
+ if(!state.exams.length){box.innerHTML='';return}
+ if(!Q.length){box.innerHTML=`<div class="qcard"><h2>今日のミッション</h2><p class="why">息抜きデーはミッションもお休み。ゆっくり休んで、明日また宝箱を狙おう。</p></div>`;return}
+ const claimed=Q.filter(x=>q.c.includes(x[0])).length,ready=claimed===3&&!q.open;
+ box.innerHTML=`<div class="qcard"><h2>今日のミッション <small id="qreset"></small></h2><div>${Q.map(([id,name,pr,txt])=>{const got=q.c.includes(id);return `<div class="qrow"><div><b>${name}</b> <small>${txt}　報酬 30XP</small><div class="bar"><i class="${pr>=1?'clear':''}" style="width:${pr*100}%"></i></div></div>${got?'<span class="got">達成</span>':pr>=1?`<button class="pri" data-claim="${id}">受け取る</button>`:''}</div>`}).join('')}</div>
+ <button class="chestb ${ready?'ready':q.open?'done':''}" ${ready?'data-chest':''} aria-label="宝箱">${CHEST}<span>${q.open?'開封済み・また明日':ready?'宝箱を開ける！':`あと${3-claimed}つで宝箱`}</span></button></div>`}
+function openChest(){const q=qst();if(q.open)return;const h=roll(),[rn,xp]=RAR[h[1]];q.open=true;addBX(xp,'chest');state.col=state.col||{};const isNew=!state.col[h[0]];state.col[h[0]]=(state.col[h[0]]||0)+1;save();
+ const w=document.createElement('div');w.className='chfx';w.style.setProperty('--rc',['#f0c04044','#cfd8e888','#ffd54f88','#ff8fb088'][h[1]]);
+ w.innerHTML=`<div class="rays"></div><div class="bx">${CHEST}</div><div class="flash"></div><div class="card"><span class="rar bg${h[1]}">${rn}</span><div class="hk r${h[1]}">${h[2]}</div><b style="font-size:20px">${isNew?'NEW！ ':''}ハンコ獲得</b><p class="why" style="margin:4px 0 0">+${xp} XP</p></div>`;
+ document.body.appendChild(w);let k=0;const tk=setInterval(()=>{tone(300+k*60,0,.06,'square',.05);k++},110);buzz([20,40,20,40,20]);
+ setTimeout(()=>{clearInterval(tk);w.classList.add('open');noise(0,.3,.5);SE.level();buzz(h[1]>=2?[80,40,80,40,200]:60);if(h[1]>=2)setTimeout(SE.clear,500);confetti(h[1]===3?320:h[1]===2?220:120);if(h[1]===3)setTimeout(()=>confetti(240,innerWidth*.2,innerHeight*.3),400)},1300);
+ let done=false;const close=()=>{if(done||!w.classList.contains('open'))return;done=true;w.remove();render()};w.onclick=close;setTimeout(close,6000)}
+function renderColle(){const col=state.col||{},n=HANKO.filter(h=>col[h[0]]).length;$('#colN').textContent=n+' / '+HANKO.length;
+ $('#colle').innerHTML=HANKO.map(h=>col[h[0]]?`<div class="bd cl on" style="color:${['#a0662b','#7d8aa0','#c9940a','#e0457b'][h[1]]}"><i>${h[2]}</i>${RAR[h[1]][0]}<b>×${col[h[0]]}</b></div>`:`<div class="bd cl"><i>？</i>${RAR[h[1]][0]}</div>`).join('')}
+function comboFx(n){if(calm)return;const d=document.createElement('div');d.className='combo';d.innerHTML=`コンボ<b>×${n}</b>+${5*(n-1)}XP`;document.body.appendChild(d);setTimeout(()=>d.remove(),1600);
+ [0,1,2].forEach(i=>tone(523*2**((n+i*4)/12),i*.06,.15,'square',.06));buzz(30)}
+let hitNext=null;const prevHP={};
+function bossHTML(e,c){const mx=Math.max(c.need,c.remain,.01),pc=Math.max(0,Math.min(100,c.remain/mx*100)),dead=c.remain<=0,low=pc<30,col=COL[e.color%COL.length];
+ const from=prevHP[e.id]??pc;prevHP[e.id]=pc;
+ return `<div class="boss ${dead?'dead':''}" id="boss"><svg class="mon" viewBox="0 0 80 70" aria-hidden="true"><ellipse cx="40" cy="66" rx="24" ry="3.5" fill="#0002"/><path d="M22 20 L16 4 L32 14Z M58 20 L64 4 L48 14Z" fill="${col}"/><path d="M12 58 Q6 18 40 12 Q74 18 68 58 Q54 64 40 60 Q26 64 12 58Z" fill="${col}"/><path d="M18 30 Q22 18 34 16" stroke="#fff6" stroke-width="3" fill="none" stroke-linecap="round"/>
+ ${dead?'<path d="M25 30 l9 9 M34 30 l-9 9 M46 30 l9 9 M55 30 l-9 9" stroke="#fff" stroke-width="3"/>':`<circle cx="30" cy="35" r="7" fill="#fff"/><circle cx="50" cy="35" r="7" fill="#fff"/><circle cx="${low?29:31}" cy="${low?37:36}" r="3.4" fill="#111"/><circle cx="${low?49:51}" cy="${low?37:36}" r="3.4" fill="#111"/><path d="M22 26 L36 30 M58 26 L44 30" stroke="#111" stroke-width="3" stroke-linecap="round" ${low?'transform="translate(0 -3)"':''}/>`}
+ ${low&&!dead?'<path d="M30 50 q5 -4 10 0 q5 4 10 0" stroke="#111" stroke-width="3" fill="none"/><path d="M66 20 q5 7 0 10 q-5 -3 0 -10" fill="#7fc4ff"/>':dead?'':'<path d="M28 47 Q40 55 52 47" stroke="#111" stroke-width="3" fill="#fff"/><path d="M33 49 v3 M40 50 v3 M47 49 v3" stroke="#111" stroke-width="2"/>'}</svg>
+ <div><div class="lbl"><span>${dead?'撃破！':'試験ボス'}「${esc(e.name)}」</span><b>HP ${h1(c.remain)} / ${h1(mx)}h</b></div><div class="hp"><i id="hpI" class="${pc<30?'lo':pc<60?'mid':''}" style="width:${from}%" data-to="${pc}"></i></div><small>${dead?'目標点に届く計算。あとは弱点つぶしで仕上げよう':'勉強した時間が、そのままボスへのダメージになる'}</small></div></div>`}
+function bossAfter(e){const hp=$('#hpI');if(hp)requestAnimationFrame(()=>requestAnimationFrame(()=>{hp.style.width=hp.dataset.to+'%'}));
+ if(hitNext&&hitNext.eid===e.id&&tab==='dash'&&!calm){const bb=$('#boss'),m=hitNext.m;bb.classList.add('hit');const r=bb.getBoundingClientRect();setTimeout(()=>{floatTxt('-'+m+'分',r.left+40,r.top+10);tone(180,0,.12,'sawtooth',.08,90)},250)}hitNext=null}
+function loginBonus(){if(state.sample||!state.exams.length)return;const t=today();if(state.login===t)return;state.login=t;addBX(10,'login');save();renderMe();
+ setTimeout(()=>{floatTxt('ログインボーナス +10XP',innerWidth/2,innerHeight*.32);confetti(50,innerWidth/2,innerHeight*.32)},700)}
+
+/* ---- 公開版（GitHub Pages など）対応 ---- */
+const HOSTED=!(window.claude&&typeof claude.use==='function');
+async function saveFile(name,data,type){let dl=null;if(!HOSTED){try{dl=await claude.use('downloads')}catch(e){}}
+ if(dl){await dl.save({filename:name,data});return true}
+ if(!HOSTED)return false;const u=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return true}
+if(HOSTED){try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}
+
+let lastTab=null;
+function render(){if(!Array.isArray(state.badges))state.badges=earned();
+ if(lastTab!==tab){const v=$('#'+tab);v.classList.remove('view');void v.offsetWidth;v.classList.add('view');lastTab=tab}
+ $$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+ ['dash','sch','rec','exams','help'].forEach(id=>$('#'+id).hidden=id!==tab);
+ $('#banner').innerHTML=(firstTime()?`<div class="banner"><span><b>はじめての方へ</b>　ここに出る数字はすべて「目安」で、記録するたびに自動で引き直されます。1日できなくても、残りの日に少しずつ配り直すだけなので大丈夫です。</span><button data-go="help">使い方を見る</button><button class="ghost" id="seen">とじる</button></div>`:'')+(state.sample?(ownSaved()?`<div class="banner"><span><b>サンプルを表示中です。</b>あなたのデータはそのまま保管されています。</span><button class="pri" id="backOwn">自分のデータに戻る</button></div>`:`<div class="banner"><span><b>いま表示しているのはサンプルです。</b>使い心地を試してみてください。触っても自分のデータには影響しません。</span><button class="pri" id="clr">自分の試験を登録して始める</button></div>`):'');
+ const sel=state.exams.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');
+ $$('.esel').forEach(s=>{const v=s.value;s.innerHTML=sel;if(ex(v))s.value=v;else if(state.sel)s.value=state.sel});
+ $$('form.row input[type=date]').forEach(i=>{if(!i.value)i.value=today()});
+ renderDash();renderSch();renderRec();renderExams();renderFocusSel();renderMe();renderHelp();renderBk();renderColle();live()}
+renderGenDw();
+
+let C=null;
+function renderDash(){const e=cur();
+ if(!e){$('#chips').innerHTML='';$('#hero').innerHTML=`<div class="guide"><h2>ようこそ。3ステップで準備完了です</h2><ol><li><b>取りたい資格とレベルを選ぶ</b>：必要な勉強時間の目安が決まります。</li><li><b>生活リズムを選ぶ</b>：通勤・昼休み・夜などのスキマ時間から、毎日の予定を自動で組みます。</li><li><b>毎日「やった！」を押す</b>：あとはアプリが計算し直してくれます。完璧じゃなくて大丈夫。</li></ol><button class="pri" data-add>① 試験を追加する</button> <button data-go="sch">② 生活リズムを設定</button> <button class="ghost" data-sample>サンプルを見てみる</button></div>`;$('#today').innerHTML='';$('#stats').innerHTML='';$('#quest').innerHTML='';$('#lower').hidden=true;C=null;renderHeat();return}
+ $('#lower').hidden=false;const c=C=calc(e);c.e=e;
+ const sorted=state.exams.slice().sort((a,b)=>a.date<b.date?-1:1);
+ $('#chips').innerHTML=sorted.length>1?sorted.map(x=>{const k=calc(x);return `<button class="chip" style="--c:${COL[x.color%COL.length]}" data-sel="${esc(x.id)}" aria-pressed="${x.id===e.id}">${esc(x.name)}<small>あと${k.left}日・${k.v[0].replace('<br>','')}</small></button>`}).join(''):'';
+ const pct=x=>Math.max(0,Math.min(100,x/e.max*100));
+ const pd=c.perDay===Infinity?'—':h1(c.perDay);
+ const todayGoal=Math.min(c.perDay,24),tp=todayGoal>0?Math.min(100,c.todayDone/todayGoal*100):100;
+ const ticks=[[e.pass,'合格'+e.pass,'p'],[e.target,'目標'+e.target,'t']].map(([x,l,k])=>`<div class="tk ${k}${k==='p'||pct(x)>82?' flip':''}" style="left:${pct(x)}%"><span>${l}</span></div>`).join('');
+ $('#hero').innerHTML=`<div class="sheet"><div><p class="ename"><b>${esc(e.name)}</b>試験日 ${esc(e.date.replaceAll('-','/'))}（${wk(e.date)}）</p>
+  <div class="big"><div><small>あと</small><span class="num">${Math.max(0,c.left)}</span><small>日</small></div><div><small>1日あたり</small><span class="num r">${pd}</span><small>時間</small></div></div>
+  <p class="why">残り必要 <b>${h1(c.remain)}時間</b> ÷ 学習できる日 約${Math.round(c.sdays)}日（週${e.days}日）　上限 ${e.cap}時間/日</p>
+  <p class="why" id="eclock" style="color:var(--red)"></p><div class="phase"><b>${PH[c.phase][0]}</b><span>${PH[c.phase][1]}</span></div><div class="reas">${reas(c,e)}</div>
+  <div class="stamp ${c.v[1]}">${c.v[0]}</div></div>
+  <div class="side"><div><div class="lbl"><span>今日の目標${todayGoal>0&&c.todayDone>=todayGoal?'　<b style="color:var(--red)">クリア！</b>':''}</span><b>${h1(c.todayDone)} / ${c.perDay===Infinity?'—':h1(todayGoal)} 時間</b></div><div class="bar"><i class="${todayGoal>0&&c.todayDone>=todayGoal?'clear':''}" style="width:${tp}%"></i></div></div>
+  <div><div class="lbl"><span>今週</span><b>${h1(c.weekDone)} / ${c.perDay===Infinity?'—':h1(c.weekGoal)} 時間</b></div><div class="bar"><i style="width:${c.weekGoal>0?Math.min(100,c.weekDone/c.weekGoal*100):100}%;background:var(--blue)"></i></div></div>
+  ${bossHTML(e,c)}
+  <div><div class="lbl"><span>点数の見通し（${e.max}点満点）</span></div><div class="gauge"><div class="prj" style="left:${pct(c.s)}%;width:${pct(c.proj)-pct(c.s)}%"></div><div class="cur" style="width:${pct(c.s)}%"></div>${ticks}</div>
+  <div class="leg"><span><i style="background:var(--ink)"></i>現在 <b>${c.sc.length?c.s:'未記録'}</b></span><span><i style="background:var(--blue)"></i>予測 <b>${c.proj}</b></span><span>${c.proj>=e.target?'目標に届く見込み':c.proj>=e.pass?'合格ラインは越える見込み':'合格ラインに届かない見込み'}</span></div></div></div></div>`;
+ $('#stats').innerHTML=[[h1(c.remain)+'h','残り必要時間',c.pace?'実績ペース基準':'目安時間基準'],[h1(c.need)+'h','目標までの必要時間','最新点数の時点から'],[c.pace?(Math.round(c.pace*10)/10)+'点':'—','1時間あたりの伸び',c.pace?'直近2回の点数から':'点数を2回記録で算出'],[h1(c.total)+'h','この試験の累計',c.L.length+'回の記録']].map(([n,l,s])=>`<div class="stat"><span class="num">${n}</span><small>${l}</small><small>${s}</small></div>`).join('');
+ draw();renderHeat();renderToday(c);renderQuest();bossAfter(e);countUp($('#hero'));countUp($('#stats'))}
+
+const svg=$('#chart');
+function draw(){if(!C||tab!=='dash')return;const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;const c=C,e=c.e,t=c.t;
+ const first=c.L.reduce((m,l)=>l.d<m?l.d:m,t);let st=first<addDays(t,-120)?addDays(t,-120):first;if(diff(st,t)<14)st=addDays(t,-14);
+ const end=c.left>0?e.date:addDays(t,1);const span=Math.max(1,diff(st,end));
+ const pts=[];let cum=sum(c.L.filter(l=>l.d<st));for(let i=0;i<=diff(st,t);i++){const d=addDays(st,i);cum+=sum(c.L.filter(l=>l.d===d));pts.push([i,cum])}
+ const goal=cum+c.remain,ymax=Math.max(goal,cum,1)*1.12;
+ const P={l:44,r:14,t:14,b:28},x=i=>P.l+i/span*(W-P.l-P.r),y=v=>H-P.b-v/ymax*(H-P.t-P.b);
+ let g='';const step=ymax>400?100:ymax>150?50:ymax>60?20:ymax>25?10:5;
+ for(let v=0;v<=ymax;v+=step)g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l-6}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="var(--mut)">${v}h</text>`;
+ const ti=diff(st,t);
+ g+=`<line x1="${x(ti)}" x2="${x(ti)}" y1="${P.t}" y2="${H-P.b}" stroke="var(--mut)" stroke-dasharray="2 3"/>`;
+ g+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" points="${pts.map(([i,v])=>x(i)+','+y(v)).join(' ')}"/>`;
+ if(c.left>0)g+=`<line x1="${x(ti)}" y1="${y(cum)}" x2="${x(span)}" y2="${y(goal)}" stroke="var(--red)" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="${x(span)}" cy="${y(goal)}" r="4.5" fill="var(--red)"/><text x="${x(span)-8}" y="${y(goal)-10}" text-anchor="end" font-size="13" font-weight="700" fill="var(--red)">${h1(goal)}h</text>`;
+ const lab=[[0,st.slice(5).replace('-','/'),'start'],[ti,'今日','middle'],[span,c.left>0?'試験日':'','end']];
+ lab.forEach(([i,l,a],k)=>{if(!l)return;if(k===1&&(x(ti)-x(0)<56||x(span)-x(ti)<56))return;if(k===0&&W<360)return;g+=`<text x="${x(i)}" y="${H-8}" text-anchor="${a}" font-size="12" fill="var(--mut)">${l}</text>`});
+ svg.innerHTML=g}
+const ro=new ResizeObserver(draw);ro.observe(svg);
+
+function renderHeat(){const t=today(),end=addDays(t,6-((parse(t).getDay()+6)%7)),st=addDays(end,-111),by={};
+ state.logs.forEach(l=>{if(l.d>=st)by[l.d]=(by[l.d]||0)+l.m});
+ let h='';for(let i=0;i<112;i++){const d=addDays(st,i),m=by[d]||0,lv=d>t?0:m===0?0:m<30?1:m<60?2:m<120?3:4;h+=`<i data-l="${lv}" class="${d===t?'today':''}" title="${d} ${h1(m/60)}時間" style="${d>t?'opacity:.35':''}"></i>`}
+ $('#heat').innerHTML=h;
+ const s=streak();
+ const mo=t.slice(0,7),mh=sum(state.logs.filter(l=>l.d.startsWith(mo)));
+ $('#heatleg').innerHTML=`<span>連続 <b>${s}日</b></span><span>今月 <b>${h1(mh)}時間</b></span><span>色が濃いほど長時間（30分/1時間/2時間）</span>`}
+
+function renderRec(){const nm=id=>esc(ex(id)?.name||'(削除済み)');
+ const L=state.logs.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,80);
+ $('#logT').innerHTML=L.length?L.map(l=>`<tr><td class="n">${esc(l.d.slice(5).replace('-','/'))}（${wk(l.d)}）</td><td>${nm(l.eid)}</td><td>${esc(l.note||'')}</td><td class="n">${Math.floor(l.m/60)?Math.floor(l.m/60)+'時間':''}${l.m%60?l.m%60+'分':''}</td><td><button data-dl="${esc(l.id)}">削除</button></td></tr>`).join(''):'<tr><td colspan="5" class="why">まだ記録がありません。下の「集中する」から始めると自動で記録されます。</td></tr>';
+ const S=state.exams.flatMap(e=>e.scores.map((s,i)=>({...s,e,i}))).sort((a,b)=>a.d<b.d?1:-1);
+ $('#scoreT').innerHTML=S.length?S.map(s=>`<tr><td class="n">${esc(s.d.replaceAll('-','/'))}</td><td>${esc(s.e.name)}</td><td class="n">${esc(s.s)} / ${esc(s.e.max)}</td><td><button data-ds="${esc(s.e.id)}|${s.i}">削除</button></td></tr>`).join(''):'<tr><td colspan="4" class="why">模試や過去問の点数を入れると精度が上がります。</td></tr>'}
+
+function renderExams(){$('#elist').innerHTML=state.exams.length?state.exams.slice().sort((a,b)=>a.date<b.date?-1:1).map(e=>{const c=calc(e);return `<div class="ecard" style="--c:${COL[e.color%COL.length]}"><div><b>${esc(e.name)}</b>${e.lv!=null?`<span class="tag">${LVS[e.lv][0]}</span>`:''}<small>${esc(e.date.replaceAll('-','/'))}（あと${c.left}日）・合格${esc(e.pass)} / 目標${esc(e.target)} / 満点${esc(e.max)}・目安${esc(e.H)}時間・週${esc(e.days)}日×最大${esc(e.cap)}時間</small></div><button data-ed="${esc(e.id)}">編集</button><button class="ghost" data-de="${esc(e.id)}">削除</button><div class="subs"><span class="hint">科目（タップで 苦手→普通→得意）：</span>${(e.subs||[]).map(x=>`<button data-sub="${esc(e.id)}|${esc(x.id)}" data-l="${x.l}">${esc(x.n)}・${['苦手','普通','得意'][x.l]}</button>`).join('')}<input placeholder="科目を追加" data-addsub="${esc(e.id)}" aria-label="科目を追加"></div></div>`}).join(''):'<p class="why">まだ試験がありません。</p>'}
+
+
+/* ---- 資格プリセット（一般的によく言われる学習時間の目安・時間は［初心者, 中級者, 上級者］） ---- */
+const PRE=[
+ ['IT','ITパスポート',1000,600,650,[150,80,30]],['IT','基本情報技術者試験',1000,600,650,[250,120,50]],['IT','応用情報技術者試験',100,60,65,[500,250,100]],['IT','情報セキュリティマネジメント',1000,600,650,[150,70,30]],['IT','AWS ソリューションアーキテクト アソシエイト',1000,720,780,[150,80,40]],['IT','G検定（JDLA）',100,70,75,[60,30,15]],
+ ['会計・金融','日商簿記3級',100,70,80,[100,50,20]],['会計・金融','日商簿記2級',100,70,80,[350,250,100]],['会計・金融','日商簿記1級',100,70,75,[1000,700,300]],['会計・金融','FP3級（学科）',60,36,45,[80,40,15]],['会計・金融','FP2級（学科）',60,36,42,[250,150,60]],
+ ['法律・不動産','宅地建物取引士（宅建）',50,36,38,[400,250,100]],['法律・不動産','行政書士',300,180,200,[800,500,250]],['法律・不動産','社会保険労務士（択一）',70,45,50,[1000,700,350]],['法律・不動産','中小企業診断士（1次）',700,420,460,[1000,700,350]],['法律・不動産','司法書士',280,200,210,[3000,2000,1000]],
+ ['語学','TOEIC L&R 600点',990,600,600,[400,200,80]],['語学','TOEIC L&R 730点',990,730,730,[700,400,150]],['語学','TOEIC L&R 860点',990,860,860,[1000,600,300]],['語学','英検2級',100,60,70,[300,150,60]],['語学','英検準1級',100,65,72,[700,400,150]],['語学','漢検2級',200,160,170,[100,50,20]],
+ ['技術・その他','危険物取扱者 乙種4類',100,60,70,[60,35,15]],['技術・その他','第二種電気工事士（学科）',100,60,70,[100,60,25]],['技術・その他','登録販売者',120,84,90,[400,250,100]],['技術・その他','秘書検定2級',100,60,70,[40,20,10]]];
+const SUBS={"基本情報技術者試験": "科目A テクノロジ|科目A マネジメント・ストラテジ|科目B アルゴリズム|科目B セキュリティ", "ITパスポート": "ストラテジ|マネジメント|テクノロジ", "応用情報技術者試験": "午前 テクノロジ|午前 マネジメント・ストラテジ|午後 記述", "情報セキュリティマネジメント": "科目A|科目B", "日商簿記3級": "仕訳|決算整理|精算表・財務諸表", "日商簿記2級": "商業簿記 仕訳|連結会計|工業簿記", "日商簿記1級": "商業簿記|会計学|工業簿記|原価計算", "FP3級（学科）": "ライフプラン|リスク管理|金融資産|タックス|不動産|相続", "FP2級（学科）": "ライフプラン|リスク管理|金融資産|タックス|不動産|相続", "宅地建物取引士（宅建）": "権利関係|宅建業法|法令上の制限|税・その他", "行政書士": "憲法|行政法|民法|商法|一般知識", "TOEIC L&R 600点": "単語|リスニング|Part5 文法|Part7 長文", "TOEIC L&R 730点": "単語|リスニング|Part5 文法|Part7 長文", "TOEIC L&R 860点": "単語|リスニング|Part5 文法|Part7 長文", "英検2級": "単語|長文|リスニング|英作文", "英検準1級": "単語|長文|リスニング|英作文"};
+const LVS=[['初心者','ほぼゼロから。用語もまだあやしい'],['中級者','基礎や関連経験がある／テキストを一通り読んだ'],['上級者','受験経験あり／過去問で合格点の近くまで取れる']];
+let dLv=0;
+function fillPre(){const g=[...new Set(PRE.map(p=>p[0]))];$('#pre').innerHTML='<option value="">自分で入力する</option>'+g.map(k=>`<optgroup label="${k}">`+PRE.map((p,i)=>p[0]===k?`<option value="${i}">${esc(p[1])}</option>`:'').join('')+'</optgroup>').join('')}
+function lvUI(){const P=PRE[$('#pre').value];$('#lvBox').hidden=!P;if(!P)return;
+ $('#lvls').innerHTML=LVS.map((l,i)=>`<button type="button" data-lv="${i}" aria-pressed="${i===dLv}">${l[0]}<small>${P[5][i]}h</small></button>`).join('');$('#lvD').textContent=LVS[dLv][1]}
+function applyPre(){const P=PRE[$('#pre').value],F=$('#eF').elements;if(!P){lvUI();plan();return}
+ F.name.value=P[1];F.max.value=P[2];F.pass.value=P[3];F.target.value=P[4];F.H.value=P[5][dLv];lvUI();plan()}
+function plan(){const F=$('#eF').elements,H=Number(F.H.value),days=Math.min(7,Math.max(1,Number(F.days.value)||1)),cap=Number(F.cap.value)||0,left=F.date.value?diff(today(),F.date.value):0;
+ if(!H||left<=0){$('#plan').innerHTML='<span class="hint">試験日を入れると、1日あたりの必要時間が出ます。</span>';return}
+ const sd=left*days/7,pd=H/sd,wk=pd*days;let msg;
+ if(pd<=cap*.85)msg='上限の範囲で余裕をもって進められます。';else if(pd<=cap)msg='上限ぎりぎり。毎日のノルマを守れば届きます。';
+ else{const need=Math.ceil(H/cap*7/days);msg=`<span class="warn">1日${cap}時間だと足りません。</span> この時間で進めるなら試験日を <b>${addDays(today(),need).replaceAll('-','/')}</b> 以降にするか、1日の時間を増やしましょう。`}
+ $('#plan').innerHTML=`試験まで <b>${left}日</b>（学習日 約${Math.round(sd)}日）で <b>${H}時間</b> やるには<br>1日<span class="num">${h1(pd)}</span>時間　週 <b>${h1(wk)}時間</b><br>${msg}`}
+
+let editing=null;
+function openDlg(id){editing=id||null;const F=$('#eF'),e=ex(id);$('#dlgT').textContent=e?'試験を編集':'試験を追加';if(!$('#pre').options.length)fillPre();F.elements.preset.value=e&&e.pre!=null?e.pre:'';dLv=e&&e.lv!=null?e.lv:0;
+ const v=e||{name:'',date:addDays(today(),90),max:100,pass:70,target:80,H:250,days:6,cap:2};
+ for(const k of ['name','date','max','pass','target','H','days','cap'])F.elements[k].value=v[k];F.elements.s0.value='';F.elements.s0.closest('label').hidden=!!e;lvUI();plan();$('#dlg').showModal()}
+$('#pre').addEventListener('change',()=>{SE.click();applyPre()});
+$('#lvls').addEventListener('click',ev=>{const b=ev.target.closest('[data-lv]');if(!b)return;dLv=Number(b.dataset.lv);SE.stamp();applyPre()});
+$('#elist').addEventListener('keydown',ev=>{const i=ev.target;if(ev.key!=='Enter'||!i.dataset.addsub)return;const e=ex(i.dataset.addsub),n=i.value.trim();if(!e||!n)return;e.subs=e.subs||[];e.subs.push({id:uid(),n,l:1});SE.click();save();render();const ni=document.querySelector(`[data-addsub="${CSS.escape(e.id)}"]`);ni&&ni.focus()});
+$('#elist').addEventListener('change',ev=>{const i=ev.target;if(!i.dataset.addsub||!i.value.trim())return;const e=ex(i.dataset.addsub);e.subs=e.subs||[];e.subs.push({id:uid(),n:i.value.trim(),l:1});save();render()});
+$('#slotT').addEventListener('change',ev=>{const i=ev.target,tr=i.closest('tr');if(!tr||!state.life)return;const sl=state.life.slots.find(x=>x.id===tr.dataset.sid);if(!sl)return;sl[i.dataset.f]=i.dataset.f==='m'?Math.max(5,Number(i.value)||5):i.value;state.life.type='custom';save();render()});
+$('#eF').addEventListener('input',ev=>{if(ev.target.name!=='preset')plan()});
+$('#eF').addEventListener('submit',ev=>{ev.preventDefault();const F=ev.target.elements,n=k=>Number(F[k].value);
+ const o={name:F.name.value.trim(),date:F.date.value,max:n('max'),pass:n('pass'),target:n('target')||n('pass'),H:n('H'),days:Math.min(7,Math.max(1,n('days'))),cap:n('cap'),pre:F.preset.value===''?null:Number(F.preset.value),lv:F.preset.value===''?null:dLv};const sp=SUBS[o.name];
+ if(editing)Object.assign(ex(editing),o);else{const e={id:uid(),...o,color:state.exams.length,created:today(),scores:[],subs:sp?sp.split('|').map(n=>({id:uid(),n,l:1})):[]};if(F.s0.value!==''){e.scores.push({d:today(),s:n('s0')});e.base=n('s0')}state.exams.push(e);state.sel=e.id;$('#dlg').close();save();tab='dash';render();celebrate('始','逆算スタート！',`${e.name} まで あと${diff(today(),e.date)}日`,'badge');return}
+ $('#dlg').close();save();render()});
+$('#dlgX').onclick=()=>$('#dlg').close();
+
+let undo=null,toastT;
+function toast(msg,prev){undo=prev;clearTimeout(toastT);$('#toastBox').innerHTML=`<div class="toast"><span>${esc(msg)}</span>${prev?'<button id="undo">元に戻す</button>':''}</div>`;toastT=setTimeout(()=>$('#toastBox').innerHTML='',5000)}
+const snap=()=>JSON.stringify(state);
+
+document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.tab){SE.click();const was=tab;tab=d.tab;render();if(tab==='dash'&&was!=='dash'&&state.exams.length)setTimeout(SE.stamp,560);return}
+ if(d.sel){SE.click();state.sel=d.sel;save();render();setTimeout(SE.stamp,560);return}
+
+ if(d.sub){const [eid,sid]=d.sub.split('|'),x=(ex(eid).subs||[]).find(z=>z.id===sid);if(x){x.l=(x.l+1)%3;SE.click();save();render()}return}
+ if(b.id==='ics'){(async()=>{if(!state.life){toast('先に生活リズムを設定してください');return}try{const ok=await saveFile('合格逆算ノート_2週間の予定.ics',ics(),'text/calendar');if(!ok){toast('この画面ではファイル保存が使えません');return}SE.coin();toast('保存したファイルを開くと、カレンダーに追加できます（各予定の5分前に通知）')}catch(e){toast('保存がキャンセルされました')}})();return}
+ if(d.go){SE.click();tab=d.go;render();scrollTo({top:0,behavior:calm?'auto':'smooth'});return}
+ if(b.id==='seen'){try{localStorage.setItem('gokaku-seen','1')}catch(e){}render();return}
+ if(d.life){SE.stamp();const p=snap();state.life=d.life==='custom'?{type:'custom',slots:state.life?state.life.slots:[],rest:state.life?state.life.rest:[0]}:mkLife(d.life);save();render();if(d.life!=='custom')toast('スキマ時間を設定しました。予定を組み直しました',p);return}
+ if(d.sd){const [sid,w]=d.sd.split('|'),sl=state.life.slots.find(x=>x.id===sid);if(sl){const W=Number(w),c=dwOf(sl);sl.dw=c.includes(W)?c.filter(x=>x!==W):[...c,W];state.life.type='custom';SE.click();save();render()}return}
+ if(d.dow){SE.click();const w=Number(d.dow),r=state.life.rest;state.life.rest=r.includes(w)?r.filter(x=>x!==w):[...r,w];save();render();return}
+ if(d.rs){const p=snap();state.life.slots=state.life.slots.filter(x=>x.id!==d.rs);state.life.type='custom';save();render();toast('スキマ時間を削除しました',p);return}
+ if(b.id==='addSlot'){if(!state.life)state.life={type:'custom',slots:[],rest:[0]};state.life.slots.push({id:uid(),label:'スキマ',t:'19:00',m:30,dw:[...WD]});state.life.type='custom';save();render();return}
+ if(d.claim){const q=qst();if(!q.c.includes(d.claim)){q.c.push(d.claim);addBX(30,'mission');save();render();SE.coin();buzz(20);floatTxt('+30 XP');confetti(40,pt.x,pt.y);if(q.c.length===3)setTimeout(()=>{SE.badge();floatTxt('宝箱が開けられる！',innerWidth/2,innerHeight*.4)},500)}return}
+ if(b.dataset.chest!==undefined){openChest();return}
+ if(d.do){const t=today(),it=dayPlan(t).items.find(i=>i.sid===d.do);if(!it)return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
+  state.done[t]=[...doneOf(t),it.sid];const all=dayPlan(t).items,fin=all.length&&all.every(i=>doneOf(t).includes(i.sid));
+  addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
+ if(d.q){addLog($('#logF').elements.eid.value,today(),Number(d.q),'クイック追加');return}
+ if(d.sample!==undefined){showSample();return}
+ if(b.id==='backOwn'){backOwn();return}
+ if(b.id==='clr'){state={exams:[],logs:[],sel:null,at:0,badges:[],life:null};save();render();openDlg();return}
+ if(d.add!==undefined||b.id==='addE'){openDlg();return}
+ if(d.ed){openDlg(d.ed);return}
+ if(d.de){const p=snap();state.exams=state.exams.filter(e=>e.id!==d.de);state.logs=state.logs.filter(l=>l.eid!==d.de);save();render();toast('試験を削除しました',p);return}
+ if(d.dl){const p=snap();state.logs=state.logs.filter(l=>l.id!==d.dl);save();render();toast('記録を削除しました',p);return}
+ if(d.ds){const p=snap(),[id,i]=d.ds.split('|');const e=ex(id);e.scores.splice(Number(i),1);save();render();toast('点数を削除しました',p);return}
+ if(b.id==='undo'&&undo){state=JSON.parse(undo);undo=null;save();render();$('#toastBox').innerHTML='';return}});
+
+function snapS(eid){const e=ex(eid),c=e?calc(e):null,xp=xpOf();return {xp,lv:lvOf(xp).n,td:c?c.todayDone:0,goal:c?c.perDay:0,rem:c?c.remain:0}}
+function addLog(eid,d,m,note,p,bn){if(!ex(eid)||m<=0)return;const b=snapS(eid);const L={id:uid(),eid,d,m:Math.round(m),note:note||''};if(p)L.p=1;if(bn)L.b=1;state.logs.push(L);const a=snapS(eid);
+ const cleared=d===today()&&b.goal>0&&b.goal!==Infinity&&b.td<b.goal&&a.td>=b.goal;if(cleared)state.goal=true;
+ const nw=checkBadges();fresh=nw;hitNext={eid,m:Math.round(m)};state.sel=eid;save();render();
+ SE.coin();buzz(15);{const x=$('.xp');x.classList.remove('spark');void x.offsetWidth;x.classList.add('spark')}floatTxt('+'+(a.xp-b.xp)+' XP');if(!calm)confetti(26,pt.x,pt.y);
+ if(a.lv>b.lv){$('#lvb').classList.remove('up');void $('#lvb').offsetWidth;$('#lvb').classList.add('up')}
+ if(p)celebrate('25分','集中 完走！','+'+(a.xp-b.xp)+' XP　5分休憩しよう','clear');
+ if(cleared)celebrate('済','今日のノルマ達成！',ex(eid).name+'　'+h1(a.td)+'時間 やりきった','clear');
+ if(a.lv>b.lv)celebrate('Lv.'+a.lv,'レベルアップ！','称号「'+ttl(a.lv)+'」になりました','level');
+ if(b.rem>0&&a.rem<=0)celebrate('撃破','ボス撃破！',ex(eid).name+'：目標点に届く計算になりました','level');
+ cheerBadges(nw);
+ if(!p&&!cleared&&!(b.rem>0&&a.rem<=0)&&a.lv===b.lv&&!nw.length)toast(cheer())}
+$('#logF').addEventListener('submit',ev=>{ev.preventDefault();const F=ev.target.elements,m=Number(F.h.value)*60+Number(F.m.value);if(m<=0)return;addLog(F.eid.value,F.d.value,m,F.note.value.trim());F.note.value=''});
+$('#scoreF').addEventListener('submit',ev=>{ev.preventDefault();const F=ev.target.elements,e=ex(F.eid.value);if(!e)return;const prev=[...e.scores].sort((a,b)=>a.d<b.d?-1:1).pop(),ns=Number(F.s.value);e.scores.push({d:F.d.value,s:ns});F.s.value='';state.sel=e.id;const nw=checkBadges();fresh=nw;save();render();const up=prev&&F.d.value>=prev.d?ns-prev.s:0;
+ if(up>0){floatTxt('+'+up+'点');celebrate('伸','+'+up+'点アップ！','前回 '+prev.s+' → 今回 '+ns+'　必要時間を計算し直しました','clear')}else{SE.coin();toast('点数を記録しました。必要時間を再計算しました')}cheerBadges(nw)});
+
+/* focus timer */
+let T;try{T=JSON.parse(localStorage.getItem(LT))}catch(e){}
+if(!T)T={eid:null,mode:'pomo',start:null,acc:0};
+const LEN={pomo:25,brk:5};let iv=null,lastS=-1;
+const FMSG=['スマホは裏返しに','いま積んでる時間が、本番の点数になる','1問ずつ。目の前の1問だけ','集中できてる。その調子','わからない所こそ伸びしろ','あと少し。やり切ろう'];
+const saveT=()=>{try{localStorage.setItem(LT,JSON.stringify(T))}catch(e){}};
+const el=()=>T.acc+(T.start?Date.now()-T.start:0);
+function renderFocusSel(){$('#fEx').innerHTML=state.exams.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');if(!ex(T.eid))T.eid=state.sel;$('#fEx').value=T.eid||''}
+const fmt=ms=>{const s=Math.max(0,Math.round(ms/1000)),h=Math.floor(s/3600);return (h?h+':'+pad(Math.floor(s/60)%60):pad(Math.floor(s/60)))+':'+pad(s%60)};
+function tick(){const ms=el();let shown,frac;
+ if(T.mode==='free'){shown=ms;frac=(ms%3600000)/3600000}else{const L=LEN[T.mode]*60000;shown=L-ms;frac=ms/L;
+  if(ms>=L&&T.start){const was=T.mode;T.start=null;T.acc=0;SE.bell();if(was==='pomo'){T.mode='brk';T.start=Date.now();saveT();addLog(T.eid,today(),LEN.pomo,'集中タイマー',1)}else{T.mode='pomo';saveT();celebrate('再','休憩おわり','次の25分、いこう','badge')}return tick()}
+  const sl=Math.ceil(shown/1000);if(T.start&&sl<=5&&sl>0&&sl!==lastS){lastS=sl;SE.tick()}}
+ $('#ring').classList.toggle('run',!!T.start&&T.mode!=='brk');$('#ring').classList.toggle('last',!!T.start&&T.mode!=='free'&&shown<=10000);
+ $('#fMsg').textContent=T.start?(T.mode==='brk'?'目を閉じて、深呼吸':FMSG[Math.floor(ms/40000)%FMSG.length]):'ボタンを押したら、あとは目の前の1問だけ';
+ $('#fTime').textContent=fmt(shown);$('#arc').setAttribute('stroke-dashoffset',String(100-Math.min(1,frac)*100));$('#arc').setAttribute('stroke',T.mode==='brk'?'#86b6e6':'#ff6166');
+ $('#fGo').textContent=T.start?'一時停止':el()>0?'再開':'開始';
+ $$('#focus .modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===T.mode));
+ const e=ex(T.eid);let sub='';if(e){const c=calc(e);sub+=(sub?'　':'')+`今日 ${h1(c.todayDone)} / ${c.perDay===Infinity?'—':h1(c.perDay)} 時間・試験まであと${c.left}日`}
+ $('#fSub').textContent=sub;
+ $('#fab').textContent=T.start?(T.mode==='brk'?'休憩 ':'集中中 ')+fmt(T.mode==='free'?ms:LEN[T.mode]*60000-ms):'集中する'}
+function loop(){clearInterval(iv);iv=setInterval(tick,250);tick()}
+$('#fab').onclick=()=>{if(!state.exams.length){openDlg();return}renderFocusSel();$('#focus').classList.add('on');tick()};
+$('#fClose').onclick=()=>{$('#focus').classList.remove('on')};
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')$('#focus').classList.remove('on')});
+$('#fEx').onchange=ev=>{T.eid=ev.target.value;saveT();tick()};
+$$('#focus .modes button').forEach(b=>b.onclick=()=>{SE.click();if(T.start&&T.mode!=='brk'&&el()>=60000)addLog(T.eid,today(),el()/60000,T.mode==='free'?'ストップウォッチ':'集中タイマー(途中)');T.mode=b.dataset.m;T.start=null;T.acc=0;saveT();tick()});
+$('#fGo').onclick=()=>{ac();if(T.start){T.acc=el();T.start=null;SE.pause()}else{T.eid=$('#fEx').value;T.start=Date.now();SE.start()}saveT();tick()};
+$('#fEnd').onclick=()=>{const ms=el();if(T.mode!=='brk'&&ms>=60000){addLog(T.eid,today(),ms/60000,T.mode==='free'?'ストップウォッチ':'集中タイマー')}T.start=null;T.acc=0;if(T.mode==='brk')T.mode='pomo';saveT();tick()};
+document.addEventListener('visibilitychange',tick);
+const sndL=()=>{$('#snd').textContent=muted?'音なし':'音あり';$('#snd').setAttribute('aria-pressed',String(!muted))};sndL();
+$('#snd').onclick=()=>{muted=!muted;try{localStorage.setItem('gokaku-mute',muted?'1':'0')}catch(e){}sndL();SE.coin()};
+
+render();loop();
+
+/* account sync */
+(async()=>{try{if(!window.claude||!claude.use){loginBonus();return}const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);if(!db||!user){loginBonus();return}
+ const id=await user.id();if(!id){loginBonus();return}dbRef=db.collection('data/users/'+id).doc('state');
+ const r=await dbRef.get();let v=r;if(r&&typeof r.data==='function')v=r.exists===false?null:r.data();else if(r&&r.data&&typeof r.data==='object'&&!r.json)v=r.data;
+ if(v&&v.json){const remote=JSON.parse(v.json);if(remote&&Array.isArray(remote.exams)&&(state.sample||(remote.at||0)>(state.at||0))){state=remote;try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render()}else if(!state.sample)save()}
+ else if(!state.sample)save();
+ lastSync=Date.now();$('#sync').textContent='アカウントに同期済み';
+ bkRef=db.collection('data/users/'+id).doc('backups');try{const r2=await bkRef.get();let w=r2;if(r2&&typeof r2.data==='function')w=r2.exists===false?null:r2.data();else if(r2&&r2.data&&typeof r2.data==='object'&&!r2.json)w=r2.data;
+  if(w&&w.json){const rl=JSON.parse(w.json),m={};[...rl,...bkList].forEach(b=>{if(b&&b.d&&(!m[b.d]||b.at>m[b.d].at))m[b.d]=b});bkList=Object.values(m).sort((a,b)=>a.d<b.d?1:-1).slice(0,7);try{localStorage.setItem(BK,JSON.stringify(bkList))}catch(e){}}}catch(e){}
+ renderBk();loginBonus()}catch(e){loginBonus()}})();
+}
+</script>
+</body></html>
