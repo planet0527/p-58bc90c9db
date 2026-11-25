@@ -301,7 +301,7 @@ textarea{width:100%;min-height:96px;font:14px/1.5 ui-monospace,monospace;padding
  <div class="helpw" id="helpw" style="margin-top:34px"></div>
 </section>
 <section class="band" id="rec" hidden>
- <h2>学習時間を記録</h2>
+ <div class="tcard" id="weeklyReport" style="margin-bottom:24px"><h2>週間学習レポート</h2><div class="row"><label>対象資格<select id="reportExam"><option value="">すべて</option></select></label><button type="button" id="reportPrev">前の週</button><button type="button" id="reportNext">次の週</button></div><div id="reportBody"></div><label style="display:block;margin-top:16px">振り返り・次週の目標<textarea id="reportNote" rows="3" maxlength="2000" style="width:100%;font:inherit" placeholder="できたこと、難しかったこと、次に試すこと"></textarea></label><button type="button" id="reportSave">振り返りを保存</button></div><h2>学習時間を記録</h2>
  <form class="row" id="logF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>時間<input type="number" name="h" min="0" max="24" step="1" value="1"></label><label>分<input type="number" name="m" min="0" max="59" step="1" value="0"></label><label style="flex:1 1 160px">メモ<input name="note" placeholder="過去問 午前 2回分"></label><button class="pri">記録</button><div class="quick"><span class="hint">今日にワンタップで追加：</span><button type="button" data-q="15">+15分</button><button type="button" data-q="30">+30分</button><button type="button" data-q="60">+1時間</button></div></form>
  <h2>模試・過去問の点数を記録</h2>
  <form class="row" id="scoreF"><label>試験<select name="eid" class="esel"></select></label><label>日付<input type="date" name="d" required></label><label>点数<input type="number" name="s" min="0" step="1" required></label><button class="pri">記録</button><p class="hint" style="flex-basis:100%">点数を記録すると、そこから先の必要時間が自動で計算し直されます。</p></form>
@@ -490,7 +490,7 @@ function renderToday(c){const t=today(),box=$('#today');
  if(P.rest){box.innerHTML=`<div class="tcard"><h2>今日は息抜きデー</h2><div class="calm">${REST_MSG[parse(t).getDate()%REST_MSG.length]}<br><b>連続記録は途切れません。</b>やりたくなったら「集中する」から少しだけやってもOK。</div></div>`;return}
  const nm=nowMin();let missed=0;
  const rows=P.items.map(it=>{const e=ex(it.eid),st=toMin(it.t),done=dn.includes(it.sid),now=!done&&nm>=st&&nm<st+it.m,miss=!done&&nm>=st+it.m;if(miss)missed+=it.m;
-  return `<div class="slot ${done?'done':''} ${it.sid===justDone?'jd':''} ${now?'now':''} ${miss?'miss':''}"><div class="tm">${it.t}<small>${it.m}分</small></div><div class="bd2"><b>${esc(it.label)}</b>${it.bonus?'<span class="bn">ボーナス XP×1.5</span>':''}${now?' <span class="nowtag">いまスキマ時間！</span>':''}<small>${e?`<span class="dot" style="background:${COL[e.color%COL.length]}"></span>${esc(e.name)}・`:''}${it.task}</small></div>${done?'<span class="ok">済</span>':e?`<button class="pri" data-do="${esc(it.sid)}">やった！</button>`:''}</div>`}).join('');
+  return `<div class="slot ${done?'done':''} ${it.sid===justDone?'jd':''} ${now?'now':''} ${miss?'miss':''}"><div class="tm">${it.t}<small>${it.m}分</small></div><div class="bd2"><b>${esc(it.label)}</b>${it.bonus?'<span class="bn">ボーナス XP×1.5</span>':''}${now?' <span class="nowtag">いまスキマ時間！</span>':''}<small>${e?`<span class="dot" style="background:${COL[e.color%COL.length]}"></span>${esc(e.name)}・`:''}${esc(it.task)}</small></div>${done?'<span class="ok">済</span>':e?`<button class="pri" data-do="${esc(it.sid)}">やった！</button>`:''}</div>`}).join('');
  const all=P.items.filter(i=>i.eid).length,dc=P.items.filter(i=>i.eid&&dn.includes(i.sid)).length;
  const tip=missed&&dc<all?`<p class="why" style="margin-top:8px">過ぎたスキマ ${missed}分は、まだ「やった！」を押せます。できなかった分は明日以降に自動で配り直すので、気にしすぎなくて大丈夫。</p>`:'';
  const over=over6()?'<div class="calm" style="margin-top:10px">6日連続でノルマ達成中。すごい。<b>そろそろ息抜きもアリ</b>です。休むのも合格戦略のひとつ。</div>':'';
@@ -723,7 +723,22 @@ function renderHeat(){const t=today(),end=addDays(t,6-((parse(t).getDay()+6)%7))
  const mo=t.slice(0,7),mh=sum(state.logs.filter(l=>l.d.startsWith(mo)));
  $('#heatleg').innerHTML=`<span>連続 <b>${s}日</b></span><span>今月 <b>${h1(mh)}時間</b></span><span>色が濃いほど長時間（30分/1時間/2時間）</span>`}
 
-function renderRec(){const nm=id=>esc(ex(id)?.name||'(削除済み)');
+let reportOffset=0,reportExam='';
+function renderWeekly(){
+ const start=addDays(today(),-((parse(today()).getDay()+6)%7)+reportOffset*7),end=addDays(start,6),prev=addDays(start,-7),sel=$('#reportExam');
+ if(reportExam&&!ex(reportExam))reportExam='';
+ sel.innerHTML='<option value="">すべて</option>'+state.exams.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('');sel.value=reportExam;
+ const logs=state.logs.filter(l=>!reportExam||l.eid===reportExam),days=Array.from({length:7},(_,i)=>addDays(start,i)),minutes=days.map(d=>logs.filter(l=>l.d===d).reduce((a,l)=>a+l.m,0)),total=minutes.reduce((a,b)=>a+b,0),previous=logs.filter(l=>l.d>=prev&&l.d<start).reduce((a,l)=>a+l.m,0),active=minutes.filter(m=>m>0).length,max=Math.max(1,...minutes),elapsed=Math.max(1,Math.min(7,diff(start,today())+1));
+ const fmtM=m=>Math.floor(m/60)+'時間 '+m%60+'分';
+ const delta=total-previous;
+ $('#reportBody').innerHTML='<p class="hint">'+esc(start)+' ～ '+esc(end)+'</p><div style="display:flex;flex-wrap:wrap;gap:20px"><div>合計<br><b class="num">'+fmtM(total)+'</b></div><div>学習日数<br><b class="num">'+active+'日</b></div><div>経過日あたり<br><b class="num">'+Math.round(total/elapsed)+'分</b></div></div><p class="hint">前週全体との差：'+(delta>=0?'+':'−')+fmtM(Math.abs(delta))+(reportOffset===0?'（今週は途中経過）':'')+'</p><div style="display:grid;gap:6px">'+days.map((d,i)=>'<div style="display:grid;grid-template-columns:65px 1fr 55px;gap:8px;align-items:center"><span>'+esc(d.slice(5))+' '+wk(d)+'</span><div class="bar" style="margin:0"><i style="width:'+100*minutes[i]/max+'%"></i></div><span style="text-align:right">'+minutes[i]+'分</span></div>').join('')+'</div><p class="why">'+(!total?'この週にはまだ学習記録がありません。':active<=2?'短い時間から始めて、学習できる日を増やしてみましょう。':'学習時間に加えて、解けるようになった問題や苦手分野も振り返りましょう。')+'</p>';
+ $('#reportNext').disabled=reportOffset>=0;const note=$('#reportNote');const key=start+'|'+reportExam;if(note.dataset.key!==key||!note.matches(':focus')){note.value=state.weekNotes?.[key]||'';note.dataset.key=key}
+}
+$('#reportExam').onchange=e=>{reportExam=e.target.value;renderWeekly()};
+$('#reportPrev').onclick=()=>{reportOffset--;renderWeekly()};
+$('#reportNext').onclick=()=>{reportOffset=Math.min(0,reportOffset+1);renderWeekly()};
+$('#reportSave').onclick=()=>{const n=$('#reportNote');state.weekNotes=state.weekNotes||{};state.weekNotes[n.dataset.key]=n.value.trim();save();toast('振り返りを保存しました')};
+function renderRec(){renderWeekly();const nm=id=>esc(ex(id)?.name||'(削除済み)');
  const L=state.logs.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,80);
  $('#logT').innerHTML=L.length?L.map(l=>`<tr><td class="n">${esc(l.d.slice(5).replace('-','/'))}（${wk(l.d)}）</td><td>${nm(l.eid)}</td><td>${esc(l.note||'')}</td><td class="n">${Math.floor(l.m/60)?Math.floor(l.m/60)+'時間':''}${l.m%60?l.m%60+'分':''}</td><td><button data-dl="${esc(l.id)}">削除</button></td></tr>`).join(''):'<tr><td colspan="5" class="why">まだ記録がありません。下の「集中する」から始めると自動で記録されます。</td></tr>';
  const S=state.exams.flatMap(e=>e.scores.map((s,i)=>({...s,e,i}))).sort((a,b)=>a.d<b.d?1:-1);
@@ -789,7 +804,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b
  if(b.id==='addSlot'){if(!state.life)state.life={type:'custom',slots:[],rest:[0]};state.life.slots.push({id:uid(),label:'スキマ',t:'19:00',m:30,dw:[...WD]});state.life.type='custom';save();render();return}
  if(d.claim){const q=qst();if(!q.c.includes(d.claim)){q.c.push(d.claim);addBX(30,'mission');save();render();SE.coin();buzz(20);floatTxt('+30 XP');confetti(40,pt.x,pt.y);if(q.c.length===3)setTimeout(()=>{SE.badge();floatTxt('宝箱が開けられる！',innerWidth/2,innerHeight*.4)},500)}return}
  if(b.dataset.chest!==undefined){openChest();return}
- if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||doneOf(t).includes(it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
+ if(d.do){const t=today(),it=dayPlan(t)?.items.find(i=>i.sid===d.do);if(!it||!ex(it.eid)||doneOf(t).includes(it.sid))return;state.done=state.done||{};for(const k in state.done)if(k<addDays(t,-30))delete state.done[k];
   state.done[t]=[...doneOf(t),it.sid];justDone=it.sid;const all=dayPlan(t).items,fin=all.length&&all.every(i=>doneOf(t).includes(i.sid));
   addLog(it.eid,t,it.m,it.label+'：'+it.task,0,it.bonus,it.sid);const n=doneOf(t).length;if(n>=2){addBX(5*(n-1),'combo');save();renderMe();setTimeout(()=>comboFx(n),350)}if(fin)celebrate('全','今日のスキマ 全制覇！','すごい。今日はもう胸を張って休んでOK','level');return}
  if(d.q){addLog($('#logF').elements.eid.value,today(),Number(d.q),'クイック追加');return}
